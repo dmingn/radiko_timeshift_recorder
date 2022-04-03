@@ -1,0 +1,36 @@
+[tool.flake8]
+extend-ignore = "E501,W503"
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+plugins = "pydantic.mypy"
+
+[tool.poetry]
+name = "radiko_timeshift_recorder"
+version = "0.1.0"
+description = ""
+authors = ["dmingn <dmingn@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+click = "^8.1.2"
+pydantic = "^1.9.0"
+pydantic-yaml = {extras = ["ruamel"], version = "^0.6.3"}
+requests = "^2.27.1"
+schedule = "^1.1.0"
+slack-sdk = "^3.15.2"
+streamlink = "^3.2.0"
+
+[tool.poetry.dev-dependencies]
+black = "^22.1.0"
+isort = {extras = ["pyproject"], version = "^5.10.1"}
+mypy = "^0.941"
+pydocstyle = "^6.1.1"
+pyproject-flake8 = "^0.0.1-alpha.2"
+types-requests = "^2.27.16"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
