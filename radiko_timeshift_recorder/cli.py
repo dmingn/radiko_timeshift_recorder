@@ -104,6 +104,6 @@ def main(rules: Path, out: Path, at: Optional[str]):
 
         while True:
             schedule.run_pending()
-            time.sleep(60)
+            time.sleep(1)
     else:
         job()
