@@ -5,6 +5,7 @@ import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -59,6 +60,12 @@ class Program:
     @property
     def url(self) -> str:
         return f"https://radiko.jp/#!/ts/{self.station_id}/{self.ft}"
+
+    @property
+    def is_finished(self) -> bool:
+        return datetime.datetime.strptime(self.to, "%Y%m%d%H%M%S").astimezone(
+            ZoneInfo("Asia/Tokyo")
+        ) < datetime.datetime.now(ZoneInfo("Asia/Tokyo"))
 
 
 @dataclass(frozen=True)

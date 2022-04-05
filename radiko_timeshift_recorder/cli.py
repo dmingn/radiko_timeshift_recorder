@@ -55,9 +55,7 @@ def main(rules: Path, out: Path, at: Optional[str]):
             # TODO: loop over stations that appears in the rules
             for station_schedule in date_area_schedule.stations:
                 for program in station_schedule.progs:
-                    if datetime.datetime.strptime(
-                        program.to, "%Y%m%d%H%M%S"
-                    ) < datetime.datetime.now() and rules_.to_record(program=program):
+                    if program.is_finished and rules_.to_record(program=program):
                         out_filepath = (
                             out / program.title / program_to_filename(program)
                         ).resolve()
