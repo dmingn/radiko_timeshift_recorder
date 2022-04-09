@@ -17,9 +17,7 @@ def program_to_filename(program: Program) -> str:
     return (
         " - ".join(
             [
-                datetime.datetime.strptime(program.ft, "%Y%m%d%H%M%S").strftime(
-                    "%Y-%m-%d %H-%M-%S"
-                ),
+                program.ft.strftime("%Y-%m-%d %H-%M-%S"),
                 program.title,
                 program.pfm,
             ]

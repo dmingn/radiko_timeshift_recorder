@@ -4,7 +4,7 @@ import datetime
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, cast
 from zoneinfo import ZoneInfo
 
 import requests
@@ -34,11 +34,9 @@ class Area:
 @dataclass(frozen=True)
 class Program:
     id: ProgramId
-    ft: str
-    to: str
-    ftl: str
-    tol: str
-    dur: str
+    ft: datetime.datetime
+    to: datetime.datetime
+    dur: int
     title: str
     pfm: str
     station_id: StationId
@@ -46,13 +44,15 @@ class Program:
     @classmethod
     def from_element(cls, element: ET.Element, station_id: StationId) -> Program:
         return cls(
-            id=element.get("id", default=""),
-            ft=element.get("ft", default=""),
-            to=element.get("to", default=""),
-            ftl=element.get("ftl", default=""),
-            tol=element.get("tol", default=""),
-            dur=element.get("dur", default=""),
-            title=element.findtext("title", default=""),
+            id=cast(ProgramId, element.get("id")),
+            ft=datetime.datetime.strptime(
+                cast(str, element.get("ft")), "%Y%m%d%H%M%S"
+            ).astimezone(ZoneInfo("Asia/Tokyo")),
+            to=datetime.datetime.strptime(
+                cast(str, element.get("to")), "%Y%m%d%H%M%S"
+            ).astimezone(ZoneInfo("Asia/Tokyo")),
+            dur=int(cast(str, element.get("dur"))),
+            title=cast(str, element.findtext("title")),
             pfm=element.findtext("pfm", default=""),
             station_id=station_id,
         )
@@ -63,9 +63,7 @@ class Program:
 
     @property
     def is_finished(self) -> bool:
-        return datetime.datetime.strptime(self.to, "%Y%m%d%H%M%S").astimezone(
-            ZoneInfo("Asia/Tokyo")
-        ) < datetime.datetime.now(ZoneInfo("Asia/Tokyo"))
+        return self.to < datetime.datetime.now(ZoneInfo("Asia/Tokyo"))
 
 
 @dataclass(frozen=True)
