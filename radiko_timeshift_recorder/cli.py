@@ -1,6 +1,5 @@
 import datetime
 import os
-import subprocess
 import time
 from pathlib import Path
 from typing import Optional
@@ -11,6 +10,7 @@ from slack_sdk import WebhookClient
 
 from radiko_timeshift_recorder.radiko import DateAreaSchedule, Program
 from radiko_timeshift_recorder.rules import Rules
+from radiko_timeshift_recorder.util import download
 
 
 def program_to_filename(program: Program) -> str:
@@ -62,30 +62,7 @@ def main(rules: Path, out: Path, at: Optional[str]):
 
                         if not out_filepath.exists():
                             try:
-                                # TODO: stop using subprocess and use streamlink API
-                                # TODO: stop using pipe
-                                # TODO: stop using ffmpeg if possible
-                                subprocess.run(
-                                    " ".join(
-                                        [
-                                            "python",
-                                            "-m",
-                                            "streamlink",
-                                            program.url,
-                                            "best",
-                                            "-O",
-                                            "|",
-                                            "ffmpeg",
-                                            "-i",
-                                            "-",
-                                            "-c",
-                                            "copy",
-                                            f'"{out_filepath}"',
-                                        ]
-                                    ),
-                                    shell=True,
-                                )
-                                # TODO: duration check
+                                download(program=program, out_filepath=out_filepath)
                             except BaseException as e:
                                 message = f"Failed to download {out_filepath}: {e}"
                             else:
