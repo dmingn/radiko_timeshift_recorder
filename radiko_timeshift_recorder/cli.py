@@ -18,8 +18,8 @@ def program_to_filename(program: Program) -> str:
         " - ".join(
             [
                 program.ft.strftime("%Y-%m-%d %H-%M-%S"),
-                program.title,
-                program.pfm,
+                program.title.replace("/", "／"),
+                program.pfm.replace("/", "／"),
             ]
         )
         + ".mp4"
