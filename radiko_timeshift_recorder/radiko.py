@@ -59,7 +59,7 @@ class Program:
 
     @property
     def url(self) -> str:
-        return f"https://radiko.jp/#!/ts/{self.station_id}/{self.ft}"
+        return f"https://radiko.jp/#!/ts/{self.station_id}/{self.ft.strftime('%Y%m%d%H%M%S')}"
 
     @property
     def is_finished(self) -> bool:
