@@ -4,6 +4,7 @@ import os
 import subprocess
 import time
 from pathlib import Path
+from queue import PriorityQueue
 from typing import Optional
 
 import click
@@ -100,34 +101,41 @@ def main(rules: Path, out: Path, at: Optional[str]):
     def job():
         rules_ = Rules.from_yaml(rules)
 
-        dates = sorted(
-            [datetime.date.today() - datetime.timedelta(days=i) for i in range(8)]
-        )
+        pq: PriorityQueue[Program] = PriorityQueue()
 
-        for date in dates:
+        for date in [
+            datetime.date.today() - datetime.timedelta(days=i) for i in range(8)
+        ]:
             date_area_schedule = DateAreaSchedule.from_date_area(date=date)
 
             # TODO: loop over stations that appears in the rules
             for station_schedule in date_area_schedule.stations:
                 for program in station_schedule.progs:
                     if program.is_finished and rules_.to_record(program=program):
-                        out_filepath = (
-                            out / program.title / program_to_filename(program)
-                        ).resolve()
+                        pq.put_nowait(program)
 
-                        out_filepath.parent.mkdir(parents=True, exist_ok=True)
+        while not pq.empty():
+            program = pq.get_nowait()
 
-                        if not out_filepath.exists():
-                            try:
-                                download(program=program, out_filepath=out_filepath)
-                            except BaseException as e:
-                                message = f"Failed to download {out_filepath}: {e}"
-                            else:
-                                message = f"Successfully downloaded {out_filepath}"
+            out_filepath = (
+                out / program.title / program_to_filename(program)
+            ).resolve()
 
-                            print(message)
-                            if client:
-                                client.send(text=message)
+            out_filepath.parent.mkdir(parents=True, exist_ok=True)
+
+            if not out_filepath.exists():
+                try:
+                    download(program=program, out_filepath=out_filepath)
+                except BaseException as e:
+                    message = f"Failed to download {out_filepath}: {e}"
+                else:
+                    message = f"Successfully downloaded {out_filepath}"
+
+                print(message)
+                if client:
+                    client.send(text=message)
+
+            pq.task_done()
 
     if at:
         schedule.every().day.at(at).do(job)

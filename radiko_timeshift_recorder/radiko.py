@@ -31,11 +31,11 @@ class Area:
             raise RuntimeError("Failed to get area from api.")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Program:
-    id: ProgramId
-    ft: datetime.datetime
     to: datetime.datetime
+    ft: datetime.datetime
+    id: ProgramId
     dur: int
     title: str
     pfm: str
