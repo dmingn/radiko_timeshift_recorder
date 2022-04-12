@@ -47,10 +47,10 @@ class Program:
             id=cast(ProgramId, element.get("id")),
             ft=datetime.datetime.strptime(
                 cast(str, element.get("ft")), "%Y%m%d%H%M%S"
-            ).astimezone(ZoneInfo("Asia/Tokyo")),
+            ).replace(tzinfo=ZoneInfo("Asia/Tokyo")),
             to=datetime.datetime.strptime(
                 cast(str, element.get("to")), "%Y%m%d%H%M%S"
-            ).astimezone(ZoneInfo("Asia/Tokyo")),
+            ).replace(tzinfo=ZoneInfo("Asia/Tokyo")),
             dur=int(cast(str, element.get("dur"))),
             title=cast(str, element.findtext("title")),
             pfm=element.findtext("pfm", default=""),
