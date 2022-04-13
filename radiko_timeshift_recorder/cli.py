@@ -5,11 +5,8 @@ import subprocess
 import time
 from pathlib import Path
 from queue import PriorityQueue
-from typing import Optional
-from zoneinfo import ZoneInfo
 
 import click
-import schedule
 from slack_sdk import WebhookClient
 
 from radiko_timeshift_recorder.radiko import DateAreaSchedule, Program
@@ -92,8 +89,7 @@ def download(program: Program, out_filepath: Path) -> None:
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     required=True,
 )
-@click.option("--at", type=click.DateTime(formats=("%H:%M",)), default=None)
-def main(rules: Path, out: Path, at: Optional[datetime.datetime]):
+def main(rules: Path, out: Path):
     try:
         client = WebhookClient(os.environ["SLACK_WEBHOOK_URL"])
     except KeyError:
@@ -138,13 +134,7 @@ def main(rules: Path, out: Path, at: Optional[datetime.datetime]):
 
             pq.task_done()
 
-    if at:
-        schedule.every().day.at(
-            at.astimezone(tz=None).astimezone(ZoneInfo("Asia/Tokyo")).strftime("%H:%M")
-        ).do(job)
-
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
-    else:
+    while True:
         job()
+
+        time.sleep(3 * 60 * 60)
