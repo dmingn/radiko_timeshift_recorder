@@ -1,27 +1,46 @@
-FROM python:3.10 AS builder
+FROM python:3.10-slim AS base
 
-WORKDIR /radiko_timeshift_recorder
 
-RUN pip install poetry
-
-COPY pyproject.toml poetry.lock ./
-
-RUN poetry config virtualenvs.in-project true && \
-    poetry install --no-dev
-
-FROM python:3.10-slim
-
-WORKDIR /radiko_timeshift_recorder
+FROM base AS install-ffmpeg
 
 RUN apt-get update && \
     apt-get install -y ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY entrypoint.bash ./
 
-COPY --from=builder /radiko_timeshift_recorder/.venv /radiko_timeshift_recorder/.venv
+FROM base AS export-requirements-txt
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR="off"
+
+WORKDIR /export-requirements-txt
+
+RUN pip install poetry
+
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry export -f requirements.txt --output requirements.txt
+
+
+FROM base AS install-requirements
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR="off"
+
+WORKDIR /install-requirements
+
+COPY --from=export-requirements-txt /export-requirements-txt/requirements.txt .
+
+RUN pip install -r requirements.txt
+
+
+FROM install-ffmpeg
+
+WORKDIR /radiko_timeshift_recorder
+
+COPY --from=install-requirements /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 
 COPY radiko_timeshift_recorder ./radiko_timeshift_recorder
 
-ENTRYPOINT ["bash", "entrypoint.bash"]
+ENTRYPOINT ["python", "-m", "radiko_timeshift_recorder"]
