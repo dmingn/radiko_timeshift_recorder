@@ -43,7 +43,9 @@ def get_duration(filepath: Path) -> float:
 
 
 def download(program: Program, out_filepath: Path) -> None:
-    part_filepath = out_filepath.with_suffix(out_filepath.suffix + ".part")
+    part_filepath = out_filepath.with_stem(program.id).with_suffix(
+        out_filepath.suffix + ".part"
+    )
 
     # TODO: avoid using subprocess and use streamlink API
     # TODO: avoid using pipe
