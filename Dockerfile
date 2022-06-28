@@ -30,6 +30,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /install-requirements
 
+# for aarch64
+RUN apt-get update && \
+    apt-get install -y build-essential && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=export-requirements-txt /export-requirements-txt/requirements.txt .
 
 RUN pip install -r requirements.txt
