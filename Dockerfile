@@ -9,26 +9,27 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 
-FROM base AS export-requirements-txt
+# FROM base AS export-requirements-txt
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR="off"
 
-WORKDIR /export-requirements-txt
+# WORKDIR /export-requirements-txt
+WORKDIR /radiko_timeshift_recorder
 
 RUN pip install poetry
 
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry export -f requirements.txt --output requirements.txt
+# RUN poetry export -f requirements.txt --output requirements.txt
 
 
-FROM base AS install-requirements
+# FROM base AS install-requirements
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR="off"
+# ENV PYTHONDONTWRITEBYTECODE=1 \
+#     PIP_NO_CACHE_DIR="off"
 
-WORKDIR /install-requirements
+# WORKDIR /install-requirements
 
 # for aarch64
 RUN apt-get update && \
@@ -36,17 +37,19 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=export-requirements-txt /export-requirements-txt/requirements.txt .
+# COPY --from=export-requirements-txt /export-requirements-txt/requirements.txt .
 
-RUN pip install -r requirements.txt
+# RUN pip install -r requirements.txt
+RUN poetry install --no-dev
 
 
-FROM install-ffmpeg
+# FROM install-ffmpeg
 
-WORKDIR /radiko_timeshift_recorder
+# WORKDIR /radiko_timeshift_recorder
 
-COPY --from=install-requirements /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+# COPY --from=install-requirements /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 
 COPY radiko_timeshift_recorder ./radiko_timeshift_recorder
 
-ENTRYPOINT ["python", "-m", "radiko_timeshift_recorder"]
+ENTRYPOINT ["poetry", "run", "python", "-m", "radiko_timeshift_recorder"]
+# ENTRYPOINT ["python", "-m", "radiko_timeshift_recorder"]
