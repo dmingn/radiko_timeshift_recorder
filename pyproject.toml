@@ -20,7 +20,7 @@ pydantic = "^1.9.0"
 pydantic-yaml = {extras = ["ruamel"], version = "^0.6.3"}
 requests = "^2.27.1"
 slack-sdk = "^3.15.2"
-streamlink = "^3.2.0"
+streamlink = {git = "https://github.com/dmingn/streamlink.git", rev = "fix/radiko"}
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
