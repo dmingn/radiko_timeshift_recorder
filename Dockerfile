@@ -1,4 +1,4 @@
-FROM python:3.10-slim AS base
+FROM python:3.12-slim AS base
 
 
 FROM base AS install-ffmpeg
@@ -9,27 +9,26 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 
-# FROM base AS export-requirements-txt
+FROM base AS export-requirements-txt
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR="off"
 
-# WORKDIR /export-requirements-txt
-WORKDIR /radiko_timeshift_recorder
+WORKDIR /export-requirements-txt
 
-RUN pip install poetry
+RUN pip install pipenv
 
-COPY pyproject.toml poetry.lock ./
+COPY Pipfile Pipfile.lock ./
 
-# RUN poetry export -f requirements.txt --output requirements.txt
+RUN pipenv requirements --hash > requirements.txt
 
 
-# FROM base AS install-requirements
+FROM base AS install-requirements
 
-# ENV PYTHONDONTWRITEBYTECODE=1 \
-#     PIP_NO_CACHE_DIR="off"
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR="off"
 
-# WORKDIR /install-requirements
+WORKDIR /install-requirements
 
 # for aarch64
 RUN apt-get update && \
@@ -37,19 +36,20 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# COPY --from=export-requirements-txt /export-requirements-txt/requirements.txt .
+COPY --from=export-requirements-txt /export-requirements-txt/requirements.txt .
 
-# RUN pip install -r requirements.txt
-RUN poetry install --no-dev
+RUN pip install -r requirements.txt
 
+# patch streamlink
+RUN sed -i 's/tf-rpaa/tf-f-rpaa-radiko/' /usr/local/lib/python3.12/site-packages/streamlink/plugins/radiko.py
 
-# FROM install-ffmpeg
+FROM install-ffmpeg
 
-# WORKDIR /radiko_timeshift_recorder
+WORKDIR /radiko_timeshift_recorder
 
-# COPY --from=install-requirements /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=install-requirements /usr/local/bin /usr/local/bin
+COPY --from=install-requirements /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 
 COPY radiko_timeshift_recorder ./radiko_timeshift_recorder
 
-ENTRYPOINT ["poetry", "run", "python", "-m", "radiko_timeshift_recorder"]
-# ENTRYPOINT ["python", "-m", "radiko_timeshift_recorder"]
+ENTRYPOINT ["python", "-m", "radiko_timeshift_recorder"]

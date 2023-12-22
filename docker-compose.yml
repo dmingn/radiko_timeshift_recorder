@@ -5,6 +5,22 @@ services:
     pull_policy: build
     env_file:
       - ./.env
+    user: "1000:1000"
     volumes:
-      - ./out:/radiko_timeshift_recorder/out
-      - ./rules:/radiko_timeshift_recorder/rules
+      - type: bind
+        source: /etc/passwd
+        target: /etc/passwd
+        read_only: true
+      - type: bind
+        source: /etc/group
+        target: /etc/group
+        read_only: true
+      - type: bind
+        source: ./out
+        target: /radiko_timeshift_recorder/out
+        read_only: false
+      - type: bind
+        source: ./rules
+        target: /radiko_timeshift_recorder/rules
+        read_only: true
+    command: ["--rules", "rules", "--out", "out"]
