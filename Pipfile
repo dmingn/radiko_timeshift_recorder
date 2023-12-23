@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+click = "*"
+pydantic = "*"
+pydantic-yaml = {extras = ["ruamel"], version = "~=0.6.3"}
+requests = "*"
+slack-sdk = "*"
+streamlink = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
+python_full_version = "3.12.0"
