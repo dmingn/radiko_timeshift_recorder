@@ -82,16 +82,7 @@ def download(program: Program, out_filepath: Path) -> None:
             f"Recorded duration {recorded_dur} differs from the program duration {program.dur}."
         )
 
-    while True:
-        try:
-            part_filepath.replace(out_filepath)
-        except OSError as e:
-            if e.errno == errno.ENAMETOOLONG:
-                out_filepath = out_filepath.with_stem(out_filepath.stem[:-1])
-            else:
-                raise e
-        else:
-            break
+    part_filepath.replace(out_filepath)
 
 
 @click.command()
@@ -131,6 +122,17 @@ def main(rules: Path, out: Path):
             ).resolve()
 
             out_filepath.parent.mkdir(parents=True, exist_ok=True)
+
+            while True:
+                try:
+                    out_filepath.exists()
+                except OSError as e:
+                    if e.errno == errno.ENAMETOOLONG:
+                        out_filepath = out_filepath.with_stem(out_filepath.stem[:-1])
+                    else:
+                        raise e
+                else:
+                    break
 
             if not out_filepath.exists():
                 try:
