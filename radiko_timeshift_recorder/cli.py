@@ -1,4 +1,5 @@
 import datetime
+import errno
 import json
 import os
 import subprocess
@@ -81,7 +82,16 @@ def download(program: Program, out_filepath: Path) -> None:
             f"Recorded duration {recorded_dur} differs from the program duration {program.dur}."
         )
 
-    part_filepath.replace(out_filepath)
+    while True:
+        try:
+            part_filepath.replace(out_filepath)
+        except OSError as e:
+            if e.errno == errno.ENAMETOOLONG:
+                out_filepath = out_filepath.with_stem(out_filepath.stem[:-1])
+            else:
+                raise e
+        else:
+            break
 
 
 @click.command()
