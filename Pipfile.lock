@@ -476,12 +476,12 @@
         },
         "slack-sdk": {
             "hashes": [
-                "sha256:d1600211eaa37c71a5f92daf4404074c3e6b3f5359a37c93c818b39d88ab4ca0",
-                "sha256:f80f0d15f0fce539b470447d2a07b03ecdad6b24f69c1edd05d464cf21253a06"
+                "sha256:c61f57f310d85be83466db5a98ab6ae3bb2e5587437b54fa0daa8fae6a0feffa",
+                "sha256:ff61db7012160eed742285ea91f11c72b7a38a6500a7f6c5335662b4bc6b853d"
             ],
             "index": "pypi",
-            "markers": "python_full_version >= '3.6.0'",
-            "version": "==3.26.1"
+            "markers": "python_version >= '3.6'",
+            "version": "==3.34.0"
         },
         "sniffio": {
             "hashes": [
