@@ -6,8 +6,8 @@ import re
 from functools import reduce
 from pathlib import Path
 
-from pydantic import BaseModel
-from pydantic_yaml import YamlModel
+from pydantic import BaseModel, ConfigDict, RootModel
+from pydantic_yaml import parse_yaml_file_as
 
 from radiko_timeshift_recorder.radiko import Program, StationId
 
@@ -15,24 +15,16 @@ PatternText = str
 
 
 class Rule(BaseModel):
-    class Config:
-        frozen = True
-
     stations: frozenset[StationId]
     title_patterns: frozenset[PatternText]
+    model_config = ConfigDict(frozen=True)
 
 
-class Rules(YamlModel):
-    class Config:
-        frozen = True
-
-    __root__: frozenset[Rule]
-
-    def __iter__(self):
-        yield from self.__root__
+class Rules(RootModel[frozenset[Rule]]):
+    model_config = ConfigDict(frozen=True)
 
     def __or__(self, other: Rules) -> Rules:
-        return Rules(__root__=self.__root__ | other.__root__)
+        return Rules.model_validate(self.root | other.root)
 
     @classmethod
     def from_yaml(cls, yaml_path: Path) -> Rules:
@@ -40,18 +32,18 @@ class Rules(YamlModel):
             return reduce(
                 operator.or_,
                 (
-                    cls.parse_file(p)
+                    parse_yaml_file_as(cls, p)
                     for p in itertools.chain(
                         yaml_path.glob("*.yaml"), yaml_path.glob("*.yml")
                     )
                 ),
-                cls(__root__=frozenset()),
+                cls(root=frozenset()),
             )
         else:
-            return cls.parse_file(yaml_path)
+            return parse_yaml_file_as(cls, yaml_path)
 
     def to_record(self, program: Program) -> bool:
-        for rule in self:
+        for rule in self.root:
             if program.station_id not in rule.stations:
                 continue
 
