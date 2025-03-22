@@ -6,7 +6,7 @@ import re
 from functools import reduce
 from pathlib import Path
 
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, ConfigDict, RootModel
 from pydantic_yaml import parse_yaml_file_as
 
 from radiko_timeshift_recorder.radiko import Program, StationId
@@ -15,16 +15,13 @@ PatternText = str
 
 
 class Rule(BaseModel):
-    class Config:
-        frozen = True
-
     stations: frozenset[StationId]
     title_patterns: frozenset[PatternText]
+    model_config = ConfigDict(frozen=True)
 
 
 class Rules(RootModel[frozenset[Rule]]):
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
     def __or__(self, other: Rules) -> Rules:
         return Rules.model_validate(self.root | other.root)
