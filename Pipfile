@@ -6,12 +6,15 @@ name = "pypi"
 [packages]
 click = "*"
 pydantic = "*"
-pydantic-yaml = {extras = ["ruamel"], version = "~=1.4.0"}
+pydantic-yaml = {extras = ["ruamel"], version = "<1.0.0"}
 requests = "*"
 slack-sdk = "*"
 streamlink = "*"
 
 [dev-packages]
+mypy = "*"
+pytest = "*"
+types-requests = "*"
 
 [requires]
 python_version = "3.12"
