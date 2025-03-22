@@ -3,6 +3,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from pydantic_yaml import to_yaml_str
 
 from radiko_timeshift_recorder.radiko import Program, StationId
 from radiko_timeshift_recorder.rules import Rule, Rules
@@ -28,12 +29,11 @@ def test_rules_can_be_merged_using_or_operator():
 
 
 def test_rules_can_be_loaded_from_single_yml_file():
-    yml_content = """
-- stations:
-    - ABC
-  title_patterns:
-    - foo+
-    """
+    rule = Rule(
+        stations=frozenset({StationId("ABC")}),
+        title_patterns=frozenset({r"foo+"}),
+    )
+    yml_content = to_yaml_str(Rules.model_validate(frozenset({rule})))
 
     with tempfile.NamedTemporaryFile(suffix=".yml", mode="+w") as tmpfile:
         tmpfile.write(yml_content)
@@ -42,28 +42,21 @@ def test_rules_can_be_loaded_from_single_yml_file():
         tmpfile_path = Path(tmpfile.name)
         rules = Rules.from_yaml(tmpfile_path)
 
-    assert (
-        Rule(
-            stations=frozenset({StationId("ABC")}),
-            title_patterns=frozenset({r"foo+"}),
-        )
-        in rules.root
-    )
+    assert rule in rules.root
 
 
 def test_rules_can_be_loaded_from_directory_contains_ymls():
-    yml_content_1 = """
-- stations:
-    - ABC
-  title_patterns:
-    - foo+
-    """
-    yml_content_2 = """
-- stations:
-    - DEF
-  title_patterns:
-    - bar
-    """
+    rule_1 = Rule(
+        stations=frozenset({StationId("ABC")}),
+        title_patterns=frozenset({r"foo+"}),
+    )
+    yml_content_1 = to_yaml_str(Rules.model_validate(frozenset({rule_1})))
+
+    rule_2 = Rule(
+        stations=frozenset({StationId("DEF")}),
+        title_patterns=frozenset({r"bar"}),
+    )
+    yml_content_2 = to_yaml_str(Rules.model_validate(frozenset({rule_2})))
 
     with tempfile.TemporaryDirectory() as tmpdir:
         dir_path = Path(tmpdir)
@@ -74,20 +67,8 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
 
         rules = Rules.from_yaml(dir_path)
 
-    assert (
-        Rule(
-            stations=frozenset({StationId("ABC")}),
-            title_patterns=frozenset({r"foo+"}),
-        )
-        in rules.root
-    )
-    assert (
-        Rule(
-            stations=frozenset({StationId("DEF")}),
-            title_patterns=frozenset({r"bar"}),
-        )
-        in rules.root
-    )
+    assert rule_1 in rules.root
+    assert rule_2 in rules.root
 
 
 @pytest.mark.parametrize(
