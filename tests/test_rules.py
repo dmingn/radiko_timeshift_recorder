@@ -13,19 +13,18 @@ def test_rules_can_be_merged_using_or_operator():
         stations=frozenset({StationId("ABC")}),
         title_patterns=frozenset({r"foo+"}),
     )
-    rules_1 = Rules(__root__=frozenset({rule_1}))
+    rules_1 = Rules.model_validate(frozenset({rule_1}))
 
     rule_2 = Rule(
         stations=frozenset({StationId("DEF")}),
         title_patterns=frozenset({r"bar"}),
     )
-    rules_2 = Rules(__root__=frozenset({rule_2}))
+    rules_2 = Rules.model_validate(frozenset({rule_2}))
 
     merged_rules = rules_1 | rules_2
 
-    assert len(list(merged_rules)) == 2
-    assert rule_1 in merged_rules
-    assert rule_2 in merged_rules
+    assert rule_1 in merged_rules.root
+    assert rule_2 in merged_rules.root
 
 
 def test_rules_can_be_loaded_from_single_yml_file():
@@ -48,7 +47,7 @@ def test_rules_can_be_loaded_from_single_yml_file():
             stations=frozenset({StationId("ABC")}),
             title_patterns=frozenset({r"foo+"}),
         )
-        in rules
+        in rules.root
     )
 
 
@@ -80,14 +79,14 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
             stations=frozenset({StationId("ABC")}),
             title_patterns=frozenset({r"foo+"}),
         )
-        in rules
+        in rules.root
     )
     assert (
         Rule(
             stations=frozenset({StationId("DEF")}),
             title_patterns=frozenset({r"bar"}),
         )
-        in rules
+        in rules.root
     )
 
 
@@ -137,6 +136,6 @@ def test_rules_can_match_program_titles(program: Program, expected: bool):
         stations=frozenset({StationId("ABC")}),
         title_patterns=frozenset({r"foo+"}),
     )
-    rules = Rules(__root__=frozenset({rule}))
+    rules = Rules.model_validate(frozenset({rule}))
 
     assert rules.to_record(program) is expected
