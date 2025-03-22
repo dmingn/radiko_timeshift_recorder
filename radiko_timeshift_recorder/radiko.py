@@ -8,27 +8,38 @@ from typing import Optional, cast
 from zoneinfo import ZoneInfo
 
 import requests
+from logzero import logger
 
 AreaId = str
 ProgramId = str
 StationId = str
 
 
-@dataclass(frozen=True)
-class Area:
-    id: AreaId
+class OutOfAreaError(Exception):
+    pass
 
-    @classmethod
-    def from_api(cls) -> Area:
-        response = requests.get("https://radiko.jp/area")
-        response.encoding = response.apparent_encoding
 
-        match = re.search(r'class="([A-Z]+[0-9]+)"', response.text)
+def fetch_area_id() -> AreaId:
+    try:
+        response = requests.get("https://radiko.jp/area", timeout=10)
+    except requests.exceptions.RequestException as e:
+        logger.error(f"HTTP request error: {e}")
+        raise
 
-        if match:
-            return Area(id=match.groups()[0])
-        else:
-            raise RuntimeError("Failed to get area from api.")
+    response.encoding = response.apparent_encoding
+    match = re.search(r'class="(.+)"', response.text)
+    if not match:
+        logger.error(f"Failed to parse area ID: {response.text}")
+        raise ValueError("Failed to retrieve area ID.")
+
+    area_id = match.groups()[0]
+    logger.info(f"Retrieved area ID: {area_id}")
+
+    if area_id == "OUT":
+        logger.warning("Out of area. Raising an error.")
+        raise OutOfAreaError("Out of area.")
+
+    return AreaId(area_id)
 
 
 @dataclass(frozen=True, order=True)
@@ -89,18 +100,18 @@ class StationSchedule:
 @dataclass(frozen=True)
 class DateAreaSchedule:
     date: datetime.date
-    area: Area
+    area_id: AreaId
     stations: frozenset[StationSchedule]
 
     @classmethod
     def from_date_area(
-        cls, date: datetime.date, area: Optional[Area] = None
+        cls, date: datetime.date, area_id: Optional[AreaId] = None
     ) -> DateAreaSchedule:
-        if not area:
-            area = Area.from_api()
+        if not area_id:
+            area_id = fetch_area_id()
 
         response = requests.get(
-            f"https://radiko.jp/v3/program/date/{date.strftime('%Y%m%d')}/{area.id}.xml"
+            f"https://radiko.jp/v3/program/date/{date.strftime('%Y%m%d')}/{area_id}.xml"
         )
         response.encoding = response.apparent_encoding
 
@@ -108,7 +119,7 @@ class DateAreaSchedule:
 
         return cls(
             date=date,
-            area=area,
+            area_id=area_id,
             stations=frozenset(
                 StationSchedule.from_element(station)
                 for station in element.iter("station")
