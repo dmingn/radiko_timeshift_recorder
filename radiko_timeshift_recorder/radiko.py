@@ -14,21 +14,18 @@ ProgramId = str
 StationId = str
 
 
-@dataclass(frozen=True)
-class Area:
-    id: AreaId
+def fetch_area_id() -> AreaId:
+    response = requests.get("https://radiko.jp/area")
+    response.encoding = response.apparent_encoding
 
-    @classmethod
-    def from_api(cls) -> Area:
-        response = requests.get("https://radiko.jp/area")
-        response.encoding = response.apparent_encoding
+    match = re.search(r'class="([A-Z]+[0-9]+)"', response.text)
 
-        match = re.search(r'class="([A-Z]+[0-9]+)"', response.text)
-
-        if match:
-            return Area(id=match.groups()[0])
-        else:
-            raise RuntimeError("Failed to get area from api.")
+    if match:
+        return match.groups()[0]
+    else:
+        raise RuntimeError(
+            f"Failed to get area from api.: {response.text}, {response.status_code} {response.reason}"
+        )
 
 
 @dataclass(frozen=True, order=True)
@@ -89,18 +86,18 @@ class StationSchedule:
 @dataclass(frozen=True)
 class DateAreaSchedule:
     date: datetime.date
-    area: Area
+    area_id: AreaId
     stations: frozenset[StationSchedule]
 
     @classmethod
     def from_date_area(
-        cls, date: datetime.date, area: Optional[Area] = None
+        cls, date: datetime.date, area_id: Optional[AreaId] = None
     ) -> DateAreaSchedule:
-        if not area:
-            area = Area.from_api()
+        if not area_id:
+            area_id = fetch_area_id()
 
         response = requests.get(
-            f"https://radiko.jp/v3/program/date/{date.strftime('%Y%m%d')}/{area.id}.xml"
+            f"https://radiko.jp/v3/program/date/{date.strftime('%Y%m%d')}/{area_id}.xml"
         )
         response.encoding = response.apparent_encoding
 
@@ -108,7 +105,7 @@ class DateAreaSchedule:
 
         return cls(
             date=date,
-            area=area,
+            area_id=area_id,
             stations=frozenset(
                 StationSchedule.from_element(station)
                 for station in element.iter("station")
