@@ -6,8 +6,9 @@ import subprocess
 import time
 from pathlib import Path
 from queue import PriorityQueue
+from typing import Annotated
 
-import click
+import typer
 from slack_sdk import WebhookClient
 
 from radiko_timeshift_recorder.programs import Program, Programs
@@ -85,14 +86,21 @@ def download(program: Program, out_filepath: Path) -> None:
     part_filepath.replace(out_filepath)
 
 
-@click.command()
-@click.option("--rules", type=click.Path(exists=True, path_type=Path), required=True)
-@click.option(
-    "--out",
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-    required=True,
-)
-def main(rules: Path, out: Path):
+def main(
+    rules: Annotated[
+        Path,
+        typer.Option(exists=True),
+    ],
+    out: Annotated[
+        Path,
+        typer.Option(
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            writable=True,
+        ),
+    ],
+):
     try:
         client = WebhookClient(os.environ["SLACK_WEBHOOK_URL"])
     except KeyError:
