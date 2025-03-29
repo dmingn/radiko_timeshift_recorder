@@ -16,6 +16,7 @@ typer = "*"
 [dev-packages]
 mypy = "*"
 pytest = "*"
+pytest-asyncio = "*"
 types-requests = "*"
 
 [requires]
