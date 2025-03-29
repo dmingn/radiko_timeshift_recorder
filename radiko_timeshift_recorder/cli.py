@@ -10,7 +10,7 @@ from queue import PriorityQueue
 import click
 from slack_sdk import WebhookClient
 
-from radiko_timeshift_recorder.radiko import DateAreaSchedule, Program
+from radiko_timeshift_recorder.programs import Program, Programs
 from radiko_timeshift_recorder.rules import Rules
 
 
@@ -20,8 +20,8 @@ def program_to_filename(program: Program) -> str:
             [
                 program.ft.strftime("%Y-%m-%d %H-%M-%S"),
                 program.title.replace("/", "／"),
-                program.pfm.replace("/", "／"),
             ]
+            + ([program.pfm.replace("/", "／")] if program.pfm else [])
         )
         + ".mp4"
     )
@@ -106,13 +106,11 @@ def main(rules: Path, out: Path):
         for date in [
             datetime.date.today() - datetime.timedelta(days=i) for i in range(8)
         ]:
-            date_area_schedule = DateAreaSchedule.from_date_area(date=date)
+            programs = Programs.from_date(date)
 
-            # TODO: loop over stations that appears in the rules
-            for station_schedule in date_area_schedule.stations:
-                for program in station_schedule.progs:
-                    if program.is_finished and rules_.to_record(program=program):
-                        pq.put_nowait(program)
+            for program in programs:
+                if program.is_finished and rules_.to_record(program=program):
+                    pq.put_nowait(program)
 
         while not pq.empty():
             program = pq.get_nowait()

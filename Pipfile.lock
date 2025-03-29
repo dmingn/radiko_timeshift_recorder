@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "88e4726dbd8411d4a7465babed16844c734078e3c766b6246ec282d6c0cb743d"
+            "sha256": "3b10561487cbd71b7ac248cb9ca86e192552aba7b8689e1200caa02b5dddfcf3"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -171,6 +171,14 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==0.7.2"
+        },
+        "logzero": {
+            "hashes": [
+                "sha256:23eb1f717a2736f9ab91ca0d43160fd2c996ad49ae6bad34652d47aba908769d",
+                "sha256:7f73ddd3ae393457236f081ffebd044a3aa2e423a47ae6ddb5179ab90d0ad082"
+            ],
+            "index": "pypi",
+            "version": "==1.7.0"
         },
         "lxml": {
             "hashes": [
@@ -481,6 +489,15 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==2.27.2"
+        },
+        "pydantic-xml": {
+            "hashes": [
+                "sha256:4a0017f88bd7304695d9faa69b3127e67ea49064692113249ee9dd69ab8bd5aa",
+                "sha256:6aa4bb20905d9e5809fd195a048be76788a73dcd611aef50cf364cdb24d3141e"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.8'",
+            "version": "==2.14.3"
         },
         "pydantic-yaml": {
             "hashes": [

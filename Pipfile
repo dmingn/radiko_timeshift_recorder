@@ -5,8 +5,10 @@ name = "pypi"
 
 [packages]
 click = "*"
+logzero = "*"
 pydantic = "*"
 pydantic-yaml = "*"
+pydantic-xml = "*"
 requests = "*"
 slack-sdk = "*"
 streamlink = "*"
