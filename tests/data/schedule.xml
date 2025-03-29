@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<radiko>
+	<ttl>1800</ttl>
+	<srvtime>1742688542</srvtime>
+	<stations>
+		<station id="FOO">
+			<name>Foo</name>
+			<progs>
+				<date>20250101</date>
+				<prog id="1" master_id="" ft="20250101050000" to="20250101051500" ftl="0500" tol="0515" dur="900">
+					<title>Foo1</title>
+					<pfm>pfm1</pfm>
+				</prog>
+				<prog id="2" master_id="" ft="20250101051500" to="20250101053000" ftl="0515" tol="0530" dur="900">
+					<title>Foo2</title>
+					<pfm>pfm2</pfm>
+				</prog>
+			</progs>
+		</station>
+		<station id="BAR">
+			<name>Bar</name>
+			<progs>
+				<date>20250101</date>
+				<prog id="3" master_id="" ft="20250101050000" to="20250101050500" ftl="0500" tol="0505" dur="300">
+					<title>Bar1</title>
+					<pfm></pfm>
+				</prog>
+				<prog id="4" master_id="" ft="20250101050500" to="20250101051500" ftl="0505" tol="0515" dur="600">
+					<title>Bar2</title>
+					<pfm></pfm>
+				</prog>
+			</progs>
+		</station>
+	</stations>
+</radiko>

@@ -9,7 +9,8 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, RootModel
 from pydantic_yaml import parse_yaml_file_as
 
-from radiko_timeshift_recorder.radiko import Program, StationId
+from radiko_timeshift_recorder.programs import Program
+from radiko_timeshift_recorder.radiko import StationId
 
 PatternText = str
 

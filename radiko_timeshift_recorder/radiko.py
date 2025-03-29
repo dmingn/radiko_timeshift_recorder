@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import datetime
 import re
-import xml.etree.ElementTree as ET
-from dataclasses import dataclass
-from typing import Optional, cast
+from typing import Annotated, Any, Optional
 from zoneinfo import ZoneInfo
 
 import requests
 from logzero import logger
+from pydantic import AwareDatetime, BeforeValidator, ConfigDict
+from pydantic_xml import BaseXmlModel, attr, element, wrapped
 
 AreaId = str
 ProgramId = str
@@ -42,86 +42,53 @@ def fetch_area_id() -> AreaId:
     return AreaId(area_id)
 
 
-@dataclass(frozen=True, order=True)
-class Program:
-    to: datetime.datetime
-    ft: datetime.datetime
-    id: ProgramId
-    dur: int
-    title: str
-    pfm: str
-    station_id: StationId
+def validate_program_datetime(value: Any) -> datetime.datetime:
+    if isinstance(value, datetime.datetime):
+        return value
 
-    @classmethod
-    def from_element(cls, element: ET.Element, station_id: StationId) -> Program:
-        return cls(
-            id=cast(ProgramId, element.get("id")),
-            ft=datetime.datetime.strptime(
-                cast(str, element.get("ft")), "%Y%m%d%H%M%S"
-            ).replace(tzinfo=ZoneInfo("Asia/Tokyo")),
-            to=datetime.datetime.strptime(
-                cast(str, element.get("to")), "%Y%m%d%H%M%S"
-            ).replace(tzinfo=ZoneInfo("Asia/Tokyo")),
-            dur=int(cast(str, element.get("dur"))),
-            title=cast(str, element.findtext("title")),
-            pfm=element.findtext("pfm", default=""),
-            station_id=station_id,
+    if isinstance(value, str):
+        return datetime.datetime.strptime(value, "%Y%m%d%H%M%S").replace(
+            tzinfo=ZoneInfo("Asia/Tokyo")
         )
 
-    @property
-    def url(self) -> str:
-        return f"https://radiko.jp/#!/ts/{self.station_id}/{self.ft.strftime('%Y%m%d%H%M%S')}"
-
-    @property
-    def is_finished(self) -> bool:
-        return self.to < datetime.datetime.now(ZoneInfo("Asia/Tokyo"))
+    raise ValueError("Invalid datetime format.")
 
 
-@dataclass(frozen=True)
-class StationSchedule:
-    id: StationId
-    name: str
-    progs: frozenset[Program]
-
-    @classmethod
-    def from_element(cls, element: ET.Element) -> StationSchedule:
-        return cls(
-            id=element.get("id", default=""),
-            name=element.findtext("name", default=""),
-            progs=frozenset(
-                Program.from_element(
-                    element=prog, station_id=element.get("id", default="")
-                )
-                for prog in element.iter("prog")
-            ),
-        )
+ProgramDateTime = Annotated[
+    AwareDatetime,
+    BeforeValidator(validate_program_datetime),
+]
 
 
-@dataclass(frozen=True)
-class DateAreaSchedule:
-    date: datetime.date
-    area_id: AreaId
-    stations: frozenset[StationSchedule]
+class Program(BaseXmlModel, search_mode="unordered"):
+    id: ProgramId = attr()
+    ft: ProgramDateTime = attr()
+    to: ProgramDateTime = attr()
+    dur: int = attr()
+    title: str = element()
+    pfm: Optional[str] = element(default=None)
+    model_config = ConfigDict(frozen=True)
 
-    @classmethod
-    def from_date_area(
-        cls, date: datetime.date, area_id: Optional[AreaId] = None
-    ) -> DateAreaSchedule:
-        if not area_id:
-            area_id = fetch_area_id()
 
-        response = requests.get(
-            f"https://radiko.jp/v3/program/date/{date.strftime('%Y%m%d')}/{area_id}.xml"
-        )
-        response.encoding = response.apparent_encoding
+class Station(BaseXmlModel, search_mode="unordered"):
+    id: StationId = attr()
+    name: str = element()
+    progs: frozenset[Program] = wrapped(path="progs", entity=element(tag="prog"))
+    model_config = ConfigDict(frozen=True)
 
-        element = ET.fromstring(response.text)
 
-        return cls(
-            date=date,
-            area_id=area_id,
-            stations=frozenset(
-                StationSchedule.from_element(station)
-                for station in element.iter("station")
-            ),
-        )
+class Schedule(BaseXmlModel, tag="radiko", search_mode="unordered"):
+    stations: frozenset[Station] = wrapped(
+        path="stations", entity=element(tag="station")
+    )
+    model_config = ConfigDict(frozen=True)
+
+
+def fetch_schedule(date: datetime.date) -> Schedule:
+    area_id = fetch_area_id()
+
+    response = requests.get(
+        f"https://radiko.jp/v3/program/date/{date.strftime('%Y%m%d')}/{area_id}.xml"
+    )
+
+    return Schedule.from_xml(response.content)

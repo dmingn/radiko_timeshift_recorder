@@ -1,11 +1,13 @@
 import datetime
 import tempfile
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 from pydantic_yaml import to_yaml_str
 
-from radiko_timeshift_recorder.radiko import Program, StationId
+from radiko_timeshift_recorder.programs import Program
+from radiko_timeshift_recorder.radiko import StationId
 from radiko_timeshift_recorder.rules import Rule, Rules
 
 
@@ -76,8 +78,8 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
     [
         (
             Program(
-                to=datetime.datetime.now(),
-                ft=datetime.datetime.now(),
+                to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
                 id="id",
                 dur=0,
                 title="foooooo",
@@ -88,8 +90,8 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
         ),
         (
             Program(
-                to=datetime.datetime.now(),
-                ft=datetime.datetime.now(),
+                to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
                 id="id",
                 dur=0,
                 title="fo",
@@ -100,8 +102,8 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
         ),
         (
             Program(
-                to=datetime.datetime.now(),
-                ft=datetime.datetime.now(),
+                to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
                 id="id",
                 dur=0,
                 title="foooooo",
