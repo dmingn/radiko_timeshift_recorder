@@ -1,4 +1,5 @@
 import datetime
+import functools
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -14,7 +15,7 @@ from radiko_timeshift_recorder.radiko import (
 )
 
 
-@pytest.fixture
+@functools.cache
 def is_radiko_available() -> bool:
     try:
         fetch_area_id()
@@ -30,12 +31,14 @@ def schedule_xml_bytes() -> bytes:
     return xml_path.read_bytes()
 
 
-@pytest.mark.skipif(condition="not is_radiko_available")
+@pytest.mark.skipif(
+    condition=not is_radiko_available(), reason="radiko is not available"
+)
 def test_fetch_area_id_can_fetch_some_area_id():
     fetch_area_id()
 
 
-@pytest.mark.skipif(condition="is_radiko_available")
+@pytest.mark.skipif(condition=is_radiko_available(), reason="radiko is available")
 def test_fetch_area_id_raises_out_of_area_error():
     with pytest.raises(OutOfAreaError):
         fetch_area_id()
@@ -116,6 +119,8 @@ def test_schedule_from_xml(schedule_xml_bytes: bytes):
     assert Schedule.from_xml(schedule_xml_bytes) == expected
 
 
-@pytest.mark.skipif(condition="not is_radiko_available")
+@pytest.mark.skipif(
+    condition=not is_radiko_available(), reason="radiko is not available"
+)
 def test_fetch_schedule_can_fetch_some_schedule():
     fetch_schedule(date=datetime.date.today())
