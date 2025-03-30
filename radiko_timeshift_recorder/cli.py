@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import errno
 import os
@@ -86,7 +87,7 @@ def main(
 
             if not out_filepath.exists():
                 try:
-                    download(program=program, out_filepath=out_filepath)
+                    asyncio.run(download(program=program, out_filepath=out_filepath))
                 except BaseException as e:
                     message = f"Failed to download {out_filepath}: {e}"
                 else:
