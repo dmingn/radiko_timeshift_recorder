@@ -19,6 +19,7 @@ httpx = "*"
 mypy = "*"
 pytest = "*"
 pytest-asyncio = "*"
+pytest-mock = "*"
 types-requests = "*"
 
 [requires]
