@@ -10,7 +10,6 @@ pydantic = "*"
 pydantic-yaml = "*"
 pydantic-xml = "*"
 requests = "*"
-slack-sdk = "*"
 streamlink = "*"
 typer = "*"
 uvicorn = {extras = ["standard"], version = "*"}
