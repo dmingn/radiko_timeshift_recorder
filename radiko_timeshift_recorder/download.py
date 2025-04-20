@@ -1,8 +1,10 @@
 import asyncio
 import json
+import logging
 import tempfile
 from pathlib import Path
 
+import tenacity
 from logzero import logger
 
 from radiko_timeshift_recorder.job import Job
@@ -71,6 +73,11 @@ async def download_stream(url: str, out_filepath: Path) -> None:
         )
 
 
+@tenacity.retry(
+    stop=tenacity.stop_after_attempt(max_attempt_number=3),
+    wait=tenacity.wait_fixed(wait=60),
+    before_sleep=tenacity.before_sleep_log(logger=logger, log_level=logging.INFO),
+)
 async def download(job: Job, out_dir: Path) -> None:
     out_filepath = get_out_filepath(job, out_dir)
 
