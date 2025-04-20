@@ -47,9 +47,6 @@ async def get_duration(filepath: Path) -> float:
 
 
 async def download_stream(url: str, out_filepath: Path) -> None:
-    # TODO: avoid using subprocess and use streamlink API
-    # TODO: avoid using pipe
-    # TODO: avoid using ffmpeg if possible
     proc = await asyncio.create_subprocess_shell(
         cmd=" ".join(
             [
@@ -58,16 +55,7 @@ async def download_stream(url: str, out_filepath: Path) -> None:
                 "streamlink",
                 url,
                 "best",
-                "-O",
-                "|",
-                "ffmpeg",
-                "-i",
-                "-",
-                "-c",
-                "copy",
-                "-f",
-                "mp4",
-                "-y",
+                "--output",
                 f'"{out_filepath}"',
             ]
         ),
