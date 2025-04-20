@@ -23,4 +23,4 @@ services:
         source: ./rules
         target: /radiko_timeshift_recorder/rules
         read_only: true
-    command: ["--rules", "rules", "--out", "out"]
+    command: ["run-server", "--out-dir", "out"]

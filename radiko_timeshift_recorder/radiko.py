@@ -43,15 +43,16 @@ def fetch_area_id() -> AreaId:
 
 
 def validate_program_datetime(value: Any) -> datetime.datetime:
-    if isinstance(value, datetime.datetime):
-        return value
-
     if isinstance(value, str):
-        return datetime.datetime.strptime(value, "%Y%m%d%H%M%S").replace(
-            tzinfo=ZoneInfo("Asia/Tokyo")
-        )
+        try:
+            return datetime.datetime.strptime(value, "%Y%m%d%H%M%S").replace(
+                tzinfo=ZoneInfo("Asia/Tokyo")
+            )
+        except ValueError:
+            pass
 
-    raise ValueError("Invalid datetime format.")
+    # pass through value to the next validator
+    return value
 
 
 ProgramDateTime = Annotated[
