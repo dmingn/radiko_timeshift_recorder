@@ -1,8 +1,41 @@
 import asyncio
+import errno
 import json
 from pathlib import Path
 
+from logzero import logger
+
 from radiko_timeshift_recorder.programs import Program
+
+
+def program_to_filename(program: Program) -> str:
+    return (
+        " - ".join(
+            [
+                program.ft.strftime("%Y-%m-%d %H-%M-%S"),
+                program.title.replace("/", "／"),
+            ]
+            + ([program.pfm.replace("/", "／")] if program.pfm else [])
+        )
+        + ".mp4"
+    )
+
+
+def program_to_out_filepath(program: Program, out_dir: Path) -> Path:
+    out_filepath = (out_dir / program.title / program_to_filename(program)).resolve()
+
+    while True:
+        try:
+            out_filepath.exists()
+        except OSError as e:
+            if e.errno == errno.ENAMETOOLONG:
+                out_filepath = out_filepath.with_stem(out_filepath.stem[:-1])
+            else:
+                raise e
+        else:
+            break
+
+    return out_filepath
 
 
 async def get_duration(filepath: Path) -> float:
@@ -20,7 +53,15 @@ async def get_duration(filepath: Path) -> float:
     return float(json.loads(stdout)["streams"][0]["duration"])
 
 
-async def download(program: Program, out_filepath: Path) -> None:
+async def download(program: Program, out_dir: Path) -> None:
+    out_filepath = program_to_out_filepath(program, out_dir)
+
+    if out_filepath.exists():
+        logger.info(f"File {out_filepath} already exists. Skipping download.")
+        return
+
+    out_filepath.parent.mkdir(parents=True, exist_ok=True)
+
     part_filepath = out_filepath.with_stem(program.id).with_suffix(
         out_filepath.suffix + ".part"
     )
