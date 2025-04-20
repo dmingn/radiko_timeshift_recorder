@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import functools
 import re
 from typing import Annotated, Any, Optional
 from zoneinfo import ZoneInfo
@@ -19,6 +20,7 @@ class OutOfAreaError(Exception):
     pass
 
 
+@functools.cache
 def fetch_area_id() -> AreaId:
     try:
         response = requests.get("https://radiko.jp/area", timeout=10)
