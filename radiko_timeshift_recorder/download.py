@@ -6,23 +6,26 @@ from pathlib import Path
 from logzero import logger
 
 from radiko_timeshift_recorder.job import Job
+from radiko_timeshift_recorder.radiko import Program
 
 
-def job_to_filename(job: Job) -> str:
+def program_to_filename(program: Program) -> str:
     return (
         " - ".join(
             [
-                job.program.ft.strftime("%Y-%m-%d %H-%M-%S"),
-                job.program.title.replace("/", "／"),
+                program.ft.strftime("%Y-%m-%d %H-%M-%S"),
+                program.title.replace("/", "／"),
             ]
-            + ([job.program.pfm.replace("/", "／")] if job.program.pfm else [])
+            + ([program.pfm.replace("/", "／")] if program.pfm else [])
         )
         + ".mp4"
     )
 
 
-def job_to_out_filepath(job: Job, out_dir: Path) -> Path:
-    out_filepath = (out_dir / job.program.title / job_to_filename(job)).resolve()
+def get_out_filepath(job: Job, out_dir: Path) -> Path:
+    out_filepath = (
+        out_dir / job.program.title / program_to_filename(job.program)
+    ).resolve()
 
     while True:
         try:
@@ -54,7 +57,7 @@ async def get_duration(filepath: Path) -> float:
 
 
 async def download(job: Job, out_dir: Path) -> None:
-    out_filepath = job_to_out_filepath(job, out_dir)
+    out_filepath = get_out_filepath(job, out_dir)
 
     if out_filepath.exists():
         logger.info(f"File {out_filepath} already exists. Skipping download.")
