@@ -6,16 +6,16 @@ from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 
+from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.job_queue import JobQueue
-from radiko_timeshift_recorder.programs import Program
 from radiko_timeshift_recorder.server import fastapi_app, get_job_queue, lifespan
 
 
 @pytest.fixture
 def test_client_with_override() -> Generator[tuple[TestClient, JobQueue], Any, None]:
-    test_queue: JobQueue[Program] = JobQueue()
+    test_queue: JobQueue[Job] = JobQueue()
 
-    def override_get_job_queue() -> JobQueue[Program]:
+    def override_get_job_queue() -> JobQueue[Job]:
         return test_queue
 
     fastapi_app.dependency_overrides[get_job_queue] = override_get_job_queue
@@ -27,24 +27,24 @@ def test_client_with_override() -> Generator[tuple[TestClient, JobQueue], Any, N
 
 
 def test_put_job_success(
-    test_client_with_override: tuple[TestClient, JobQueue], sample_program: Program
+    test_client_with_override: tuple[TestClient, JobQueue], sample_job: Job
 ):
     client, test_queue = test_client_with_override
-    response = client.post("/job_queue", json=jsonable_encoder(sample_program))
+    response = client.post("/job_queue", json=jsonable_encoder(sample_job))
 
     assert response.status_code == 201
-    assert response.json() == jsonable_encoder(sample_program)
+    assert response.json() == jsonable_encoder(sample_job)
     assert test_queue.qsize() == 1
-    assert asyncio.run(test_queue.get()) == sample_program
+    assert asyncio.run(test_queue.get()) == sample_job
 
 
 def test_put_job_conflict(
-    test_client_with_override: tuple[TestClient, JobQueue], sample_program: Program
+    test_client_with_override: tuple[TestClient, JobQueue], sample_job: Job
 ):
     client, test_queue = test_client_with_override
-    asyncio.run(test_queue.put(sample_program))
+    asyncio.run(test_queue.put(sample_job))
 
-    response = client.post("/job_queue", json=jsonable_encoder(sample_program))
+    response = client.post("/job_queue", json=jsonable_encoder(sample_job))
 
     assert response.status_code == 409
     assert test_queue.qsize() == 1
