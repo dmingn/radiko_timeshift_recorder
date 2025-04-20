@@ -22,7 +22,14 @@ class Job(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     def __lt__(self, other: Job) -> bool:
-        return self.program.to < other.program.to
+        # Order defines the priority of the job
+
+        # Program which ends earlier should be prioritized
+        # If the end time is the same, the one which starts earlier should be prioritized
+        return (self.program.to, self.program.ft) < (
+            other.program.to,
+            other.program.ft,
+        )
 
     @property
     def is_ready_to_process(self) -> bool:
