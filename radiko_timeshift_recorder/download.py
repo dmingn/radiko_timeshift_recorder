@@ -24,7 +24,7 @@ def program_to_filename(program: Program) -> str:
 
 def get_out_filepath(job: Job, out_dir: Path) -> Path:
     out_filepath = (
-        out_dir / job.program.title / program_to_filename(job.program)
+        out_dir / job.station_id / job.program.title / program_to_filename(job.program)
     ).resolve()
 
     return trim_filestem(out_filepath)
