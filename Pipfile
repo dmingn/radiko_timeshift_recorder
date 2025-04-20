@@ -11,6 +11,7 @@ pydantic-yaml = "*"
 pydantic-xml = "*"
 requests = "*"
 streamlink = "*"
+tenacity = "*"
 typer = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 
@@ -19,6 +20,7 @@ httpx = "*"
 mypy = "*"
 pytest = "*"
 pytest-asyncio = "*"
+pytest-mock = "*"
 types-requests = "*"
 
 [requires]
