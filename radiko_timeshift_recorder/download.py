@@ -46,6 +46,43 @@ async def get_duration(filepath: Path) -> float:
     return float(json.loads(stdout)["streams"][0]["duration"])
 
 
+async def download_stream(url: str, out_filepath: Path) -> None:
+    # TODO: avoid using subprocess and use streamlink API
+    # TODO: avoid using pipe
+    # TODO: avoid using ffmpeg if possible
+    proc = await asyncio.create_subprocess_shell(
+        cmd=" ".join(
+            [
+                "python",
+                "-m",
+                "streamlink",
+                url,
+                "best",
+                "-O",
+                "|",
+                "ffmpeg",
+                "-i",
+                "-",
+                "-c",
+                "copy",
+                "-f",
+                "mp4",
+                "-y",
+                f'"{out_filepath}"',
+            ]
+        ),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    stdout, stderr = await proc.communicate()
+
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"Command failed with exit code {proc.returncode}\n{stderr.decode()}"
+        )
+
+
 async def download(job: Job, out_dir: Path) -> None:
     out_filepath = get_out_filepath(job, out_dir)
 
@@ -63,40 +100,7 @@ async def download(job: Job, out_dir: Path) -> None:
     ) as tmp_file:
         temp_filepath = Path(tmp_file.name)
 
-        # TODO: avoid using subprocess and use streamlink API
-        # TODO: avoid using pipe
-        # TODO: avoid using ffmpeg if possible
-        proc = await asyncio.create_subprocess_shell(
-            cmd=" ".join(
-                [
-                    "python",
-                    "-m",
-                    "streamlink",
-                    job.url,
-                    "best",
-                    "-O",
-                    "|",
-                    "ffmpeg",
-                    "-i",
-                    "-",
-                    "-c",
-                    "copy",
-                    "-f",
-                    "mp4",
-                    "-y",
-                    f'"{temp_filepath}"',
-                ]
-            ),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-
-        stdout, stderr = await proc.communicate()
-
-        if proc.returncode != 0:
-            raise RuntimeError(
-                f"Command failed with exit code {proc.returncode}\n{stderr.decode()}"
-            )
+        await download_stream(job.url, temp_filepath)
 
         recorded_dur = await get_duration(temp_filepath)
 
