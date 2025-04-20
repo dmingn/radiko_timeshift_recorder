@@ -49,7 +49,7 @@ class Rules(RootModel[frozenset[Rule]]):
                 continue
 
             for pattern in rule.title_patterns:
-                if re.search(pattern, job.title):
+                if re.search(pattern, job.program.title):
                     return True
 
         return False

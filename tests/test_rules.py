@@ -7,7 +7,7 @@ import pytest
 from pydantic_yaml import to_yaml_str
 
 from radiko_timeshift_recorder.job import Job
-from radiko_timeshift_recorder.radiko import StationId
+from radiko_timeshift_recorder.radiko import Program, StationId
 from radiko_timeshift_recorder.rules import Rule, Rules
 
 
@@ -78,36 +78,42 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
     [
         (
             Job(
-                to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                id="id",
-                dur=0,
-                title="foooooo",
-                pfm="",
+                program=Program(
+                    to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                    ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                    id="id",
+                    dur=0,
+                    title="foooooo",
+                    pfm="",
+                ),
                 station_id="ABC",
             ),
             True,
         ),
         (
             Job(
-                to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                id="id",
-                dur=0,
-                title="fo",
-                pfm="",
+                program=Program(
+                    to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                    ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                    id="id",
+                    dur=0,
+                    title="fo",
+                    pfm="",
+                ),
                 station_id="ABC",
             ),
             False,
         ),
         (
             Job(
-                to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                id="id",
-                dur=0,
-                title="foooooo",
-                pfm="",
+                program=Program(
+                    to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                    ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                    id="id",
+                    dur=0,
+                    title="foooooo",
+                    pfm="",
+                ),
                 station_id="DEF",
             ),
             False,

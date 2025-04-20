@@ -5,7 +5,7 @@ from functools import total_ordering
 from typing import Self
 from zoneinfo import ZoneInfo
 
-from pydantic import ConfigDict, RootModel
+from pydantic import BaseModel, ConfigDict, RootModel
 
 from radiko_timeshift_recorder.radiko import (
     Program,
@@ -16,32 +16,25 @@ from radiko_timeshift_recorder.radiko import (
 
 
 @total_ordering
-class Job(Program):
+class Job(BaseModel):
+    program: Program
     station_id: StationId
     model_config = ConfigDict(frozen=True)
 
     def __lt__(self, other: Job) -> bool:
-        return self.to < other.to
+        return self.program.to < other.program.to
 
     @property
     def is_finished(self) -> bool:
-        return self.to < datetime.datetime.now(ZoneInfo("Asia/Tokyo"))
+        return self.program.to < datetime.datetime.now(ZoneInfo("Asia/Tokyo"))
 
     @property
     def url(self) -> str:
-        return f"https://radiko.jp/#!/ts/{self.station_id}/{self.ft.strftime('%Y%m%d%H%M%S')}"
+        return f"https://radiko.jp/#!/ts/{self.station_id}/{self.program.ft.strftime('%Y%m%d%H%M%S')}"
 
     @classmethod
     def from_program(cls, program: Program, station_id: StationId) -> Self:
-        return cls(
-            id=program.id,
-            ft=program.ft,
-            to=program.to,
-            dur=program.dur,
-            title=program.title,
-            pfm=program.pfm,
-            station_id=station_id,
-        )
+        return cls(program=program, station_id=station_id)
 
 
 class Jobs(RootModel[frozenset[Job]]):

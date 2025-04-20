@@ -12,17 +12,17 @@ def job_to_filename(job: Job) -> str:
     return (
         " - ".join(
             [
-                job.ft.strftime("%Y-%m-%d %H-%M-%S"),
-                job.title.replace("/", "／"),
+                job.program.ft.strftime("%Y-%m-%d %H-%M-%S"),
+                job.program.title.replace("/", "／"),
             ]
-            + ([job.pfm.replace("/", "／")] if job.pfm else [])
+            + ([job.program.pfm.replace("/", "／")] if job.program.pfm else [])
         )
         + ".mp4"
     )
 
 
 def job_to_out_filepath(job: Job, out_dir: Path) -> Path:
-    out_filepath = (out_dir / job.title / job_to_filename(job)).resolve()
+    out_filepath = (out_dir / job.program.title / job_to_filename(job)).resolve()
 
     while True:
         try:
@@ -62,7 +62,7 @@ async def download(job: Job, out_dir: Path) -> None:
 
     out_filepath.parent.mkdir(parents=True, exist_ok=True)
 
-    part_filepath = out_filepath.with_stem(job.id).with_suffix(
+    part_filepath = out_filepath.with_stem(job.program.id).with_suffix(
         out_filepath.suffix + ".part"
     )
 
@@ -103,9 +103,9 @@ async def download(job: Job, out_dir: Path) -> None:
 
     recorded_dur = await get_duration(part_filepath)
 
-    if abs(recorded_dur - job.dur) > 1:
+    if abs(recorded_dur - job.program.dur) > 1:
         raise AssertionError(
-            f"Recorded duration {recorded_dur} differs from the program duration {job.dur}."
+            f"Recorded duration {recorded_dur} differs from the program duration {job.program.dur}."
         )
 
     part_filepath.replace(out_filepath)
