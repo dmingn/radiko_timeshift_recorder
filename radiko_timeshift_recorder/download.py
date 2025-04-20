@@ -1,5 +1,6 @@
 import asyncio
 import json
+import tempfile
 from pathlib import Path
 
 from logzero import logger
@@ -54,50 +55,54 @@ async def download(job: Job, out_dir: Path) -> None:
 
     out_filepath.parent.mkdir(parents=True, exist_ok=True)
 
-    part_filepath = out_filepath.with_stem(job.program.id).with_suffix(
-        out_filepath.suffix + ".part"
-    )
+    with tempfile.NamedTemporaryFile(
+        mode="w+b",
+        suffix=out_filepath.suffix,
+        dir=out_filepath.parent,
+        delete=True,
+    ) as tmp_file:
+        temp_filepath = Path(tmp_file.name)
 
-    # TODO: avoid using subprocess and use streamlink API
-    # TODO: avoid using pipe
-    # TODO: avoid using ffmpeg if possible
-    proc = await asyncio.create_subprocess_shell(
-        cmd=" ".join(
-            [
-                "python",
-                "-m",
-                "streamlink",
-                job.url,
-                "best",
-                "-O",
-                "|",
-                "ffmpeg",
-                "-i",
-                "-",
-                "-c",
-                "copy",
-                "-f",
-                "mp4",
-                "-y",
-                f'"{part_filepath}"',
-            ]
-        ),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-
-    stdout, stderr = await proc.communicate()
-
-    if proc.returncode != 0:
-        raise RuntimeError(
-            f"Command failed with exit code {proc.returncode}\n{stderr.decode()}"
+        # TODO: avoid using subprocess and use streamlink API
+        # TODO: avoid using pipe
+        # TODO: avoid using ffmpeg if possible
+        proc = await asyncio.create_subprocess_shell(
+            cmd=" ".join(
+                [
+                    "python",
+                    "-m",
+                    "streamlink",
+                    job.url,
+                    "best",
+                    "-O",
+                    "|",
+                    "ffmpeg",
+                    "-i",
+                    "-",
+                    "-c",
+                    "copy",
+                    "-f",
+                    "mp4",
+                    "-y",
+                    f'"{temp_filepath}"',
+                ]
+            ),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
 
-    recorded_dur = await get_duration(part_filepath)
+        stdout, stderr = await proc.communicate()
 
-    if abs(recorded_dur - job.program.dur) > 1:
-        raise AssertionError(
-            f"Recorded duration {recorded_dur} differs from the program duration {job.program.dur}."
-        )
+        if proc.returncode != 0:
+            raise RuntimeError(
+                f"Command failed with exit code {proc.returncode}\n{stderr.decode()}"
+            )
 
-    part_filepath.replace(out_filepath)
+        recorded_dur = await get_duration(temp_filepath)
+
+        if abs(recorded_dur - job.program.dur) > 1:
+            raise AssertionError(
+                f"Recorded duration {recorded_dur} differs from the program duration {job.program.dur}."
+            )
+
+        temp_filepath.replace(out_filepath)
