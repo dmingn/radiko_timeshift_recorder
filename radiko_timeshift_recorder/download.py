@@ -57,6 +57,7 @@ async def download_stream(url: str, out_filepath: Path) -> None:
                 "streamlink",
                 url,
                 "best",
+                "--force",
                 "--output",
                 f'"{out_filepath}"',
             ]
