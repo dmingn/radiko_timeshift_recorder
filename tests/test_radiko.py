@@ -31,6 +31,7 @@ def schedule_xml_bytes() -> bytes:
     return xml_path.read_bytes()
 
 
+@pytest.mark.radiko
 @pytest.mark.skipif(
     condition=not is_radiko_available(), reason="radiko is not available"
 )
@@ -38,6 +39,7 @@ def test_fetch_area_id_can_fetch_some_area_id():
     fetch_area_id()
 
 
+@pytest.mark.radiko
 @pytest.mark.skipif(condition=is_radiko_available(), reason="radiko is available")
 def test_fetch_area_id_raises_out_of_area_error():
     with pytest.raises(OutOfAreaError):
@@ -119,6 +121,7 @@ def test_schedule_from_xml(schedule_xml_bytes: bytes):
     assert Schedule.from_xml(schedule_xml_bytes) == expected
 
 
+@pytest.mark.radiko
 @pytest.mark.skipif(
     condition=not is_radiko_available(), reason="radiko is not available"
 )
