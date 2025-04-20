@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+fastapi = "*"
 logzero = "*"
 pydantic = "*"
 pydantic-yaml = "*"
@@ -12,8 +13,10 @@ requests = "*"
 slack-sdk = "*"
 streamlink = "*"
 typer = "*"
+uvicorn = {extras = ["standard"], version = "*"}
 
 [dev-packages]
+httpx = "*"
 mypy = "*"
 pytest = "*"
 pytest-asyncio = "*"
