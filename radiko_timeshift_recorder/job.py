@@ -32,10 +32,6 @@ class Job(BaseModel):
     def url(self) -> str:
         return f"https://radiko.jp/#!/ts/{self.station_id}/{self.program.ft.strftime('%Y%m%d%H%M%S')}"
 
-    @classmethod
-    def from_program(cls, program: Program, station_id: StationId) -> Self:
-        return cls(program=program, station_id=station_id)
-
 
 class Jobs(RootModel[frozenset[Job]]):
     def __iter__(self):
@@ -50,7 +46,7 @@ class Jobs(RootModel[frozenset[Job]]):
         return cls.model_validate(
             frozenset(
                 {
-                    Job.from_program(program=program, station_id=station.id)
+                    Job(program=program, station_id=station.id)
                     for station in schedule.stations
                     for program in station.progs
                 }
