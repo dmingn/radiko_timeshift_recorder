@@ -69,8 +69,10 @@ async def download_stream(url: str, out_filepath: Path) -> None:
     stdout, stderr = await proc.communicate()
 
     if proc.returncode != 0:
+        logger.debug(f"stdout: {stdout.decode().strip()}")
+        logger.debug(f"stderr: {stderr.decode().strip()}")
         raise RuntimeError(
-            f"Command failed with exit code {proc.returncode}\n{stderr.decode()}"
+            f"Failed to download stream {url}: {stderr.decode().strip()}"
         )
 
 
