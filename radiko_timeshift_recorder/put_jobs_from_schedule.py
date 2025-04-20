@@ -7,7 +7,7 @@ import typer
 from logzero import logger
 
 from radiko_timeshift_recorder.client import Client
-from radiko_timeshift_recorder.programs import Programs
+from radiko_timeshift_recorder.job import Jobs
 from radiko_timeshift_recorder.rules import Rules
 
 typer_app = typer.Typer()
@@ -28,21 +28,19 @@ def put_jobs_from_schedule(
 ):
     rules = Rules.from_yaml(rules_path)
 
-    programs = itertools.chain.from_iterable(
+    jobs = itertools.chain.from_iterable(
         [
-            Programs.from_date(datetime.date.today() - datetime.timedelta(days=i))
+            Jobs.from_date(datetime.date.today() - datetime.timedelta(days=i))
             for i in range(8)
         ]
     )
 
     with Client(server_url) as client:
-        for program in [
-            program
-            for program in sorted(programs)
-            if program.is_finished and rules.to_record(program=program)
+        for job in [
+            job for job in sorted(jobs) if job.is_finished and rules.to_record(job=job)
         ]:
             try:
-                client.put_job(program)
+                client.put_job(job)
             except Exception as e:
-                logger.exception(f"Failed to put job: {program}, error: {e}")
+                logger.exception(f"Failed to put job: {job}, error: {e}")
                 continue

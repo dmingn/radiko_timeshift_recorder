@@ -9,7 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, RootModel
 from pydantic_yaml import parse_yaml_file_as
 
-from radiko_timeshift_recorder.programs import Program
+from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import StationId
 
 PatternText = str
@@ -43,13 +43,13 @@ class Rules(RootModel[frozenset[Rule]]):
         else:
             return parse_yaml_file_as(cls, yaml_path)
 
-    def to_record(self, program: Program) -> bool:
+    def to_record(self, job: Job) -> bool:
         for rule in self.root:
-            if program.station_id not in rule.stations:
+            if job.station_id not in rule.stations:
                 continue
 
             for pattern in rule.title_patterns:
-                if re.search(pattern, program.title):
+                if re.search(pattern, job.title):
                     return True
 
         return False

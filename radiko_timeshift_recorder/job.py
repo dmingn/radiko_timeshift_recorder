@@ -7,16 +7,20 @@ from zoneinfo import ZoneInfo
 
 from pydantic import ConfigDict, RootModel
 
-from radiko_timeshift_recorder.radiko import Program as RadikoProgram
-from radiko_timeshift_recorder.radiko import Schedule, StationId, fetch_schedule
+from radiko_timeshift_recorder.radiko import (
+    Program,
+    Schedule,
+    StationId,
+    fetch_schedule,
+)
 
 
 @total_ordering
-class Program(RadikoProgram):
+class Job(Program):
     station_id: StationId
     model_config = ConfigDict(frozen=True)
 
-    def __lt__(self, other: Program) -> bool:
+    def __lt__(self, other: Job) -> bool:
         return self.to < other.to
 
     @property
@@ -28,7 +32,7 @@ class Program(RadikoProgram):
         return f"https://radiko.jp/#!/ts/{self.station_id}/{self.ft.strftime('%Y%m%d%H%M%S')}"
 
     @classmethod
-    def from_radiko_program(cls, program: RadikoProgram, station_id: StationId) -> Self:
+    def from_program(cls, program: Program, station_id: StationId) -> Self:
         return cls(
             id=program.id,
             ft=program.ft,
@@ -40,7 +44,7 @@ class Program(RadikoProgram):
         )
 
 
-class Programs(RootModel[frozenset[Program]]):
+class Jobs(RootModel[frozenset[Job]]):
     def __iter__(self):
         return self.root.__iter__()
 
@@ -53,7 +57,7 @@ class Programs(RootModel[frozenset[Program]]):
         return cls.model_validate(
             frozenset(
                 {
-                    Program.from_radiko_program(program=program, station_id=station.id)
+                    Job.from_program(program=program, station_id=station.id)
                     for station in schedule.stations
                     for program in station.progs
                 }

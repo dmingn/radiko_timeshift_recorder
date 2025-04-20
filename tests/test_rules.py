@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from pydantic_yaml import to_yaml_str
 
-from radiko_timeshift_recorder.programs import Program
+from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import StationId
 from radiko_timeshift_recorder.rules import Rule, Rules
 
@@ -74,10 +74,10 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
 
 
 @pytest.mark.parametrize(
-    "program,expected",
+    "job,expected",
     [
         (
-            Program(
+            Job(
                 to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
                 ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
                 id="id",
@@ -89,7 +89,7 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
             True,
         ),
         (
-            Program(
+            Job(
                 to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
                 ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
                 id="id",
@@ -101,7 +101,7 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
             False,
         ),
         (
-            Program(
+            Job(
                 to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
                 ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
                 id="id",
@@ -114,11 +114,11 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
         ),
     ],
 )
-def test_rules_can_match_program_titles(program: Program, expected: bool):
+def test_rules_can_match_job_titles(job: Job, expected: bool):
     rule = Rule(
         stations=frozenset({StationId("ABC")}),
         title_patterns=frozenset({r"foo+"}),
     )
     rules = Rules.model_validate(frozenset({rule}))
 
-    assert rules.to_record(program) is expected
+    assert rules.to_record(job) is expected

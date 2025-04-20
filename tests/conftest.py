@@ -3,12 +3,12 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from radiko_timeshift_recorder.programs import Program
+from radiko_timeshift_recorder.job import Job
 
 
 @pytest.fixture()
-def sample_program() -> Program:
-    return Program(
+def sample_job() -> Job:
+    return Job(
         id="1",
         ft=datetime.datetime(2025, 1, 1, 5, 0, tzinfo=ZoneInfo("Asia/Tokyo")),
         to=datetime.datetime(2025, 1, 1, 5, 15, tzinfo=ZoneInfo("Asia/Tokyo")),

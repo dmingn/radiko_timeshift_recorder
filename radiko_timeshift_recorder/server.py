@@ -10,35 +10,33 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from logzero import logger
 
 from radiko_timeshift_recorder.download import download
+from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.job_queue import JobAlreadyExistsError, JobQueue
-from radiko_timeshift_recorder.programs import Program
 
 
 @functools.cache
-def get_job_queue() -> JobQueue[Program]:
+def get_job_queue() -> JobQueue[Job]:
     return JobQueue()
 
 
 async def worker(
     id: int,
-    job_queue: JobQueue[Program],
-    process_job: Callable[[Program], Awaitable[None]],
+    job_queue: JobQueue[Job],
+    process_job: Callable[[Job], Awaitable[None]],
 ) -> None:
     logger.info(f"Worker-{id} started")
 
     while True:
-        program = await job_queue.get()
-        logger.info(f"Worker-{id} received job: {program}")
+        job = await job_queue.get()
+        logger.info(f"Worker-{id} received job: {job}")
 
         try:
-            await process_job(program)
+            await process_job(job)
         except Exception as e:
-            logger.exception(
-                f"Worker-{id} failed to process job: {program}, error: {e}"
-            )
+            logger.exception(f"Worker-{id} failed to process job: {job}, error: {e}")
 
-        job_queue.mark_done(program)
-        logger.info(f"Worker-{id} finished job: {program}")
+        job_queue.mark_done(job)
+        logger.info(f"Worker-{id} finished job: {job}")
 
 
 @asynccontextmanager
@@ -69,24 +67,22 @@ fastapi_app = FastAPI(lifespan=lifespan)
 
 @fastapi_app.post(
     "/job_queue",
-    response_model=Program,
+    response_model=Job,
     status_code=status.HTTP_201_CREATED,
     responses={status.HTTP_409_CONFLICT: {"description": "Job already exists"}},
 )
-async def put_job(
-    program: Program, job_queue: JobQueue[Program] = Depends(get_job_queue)
-) -> Program:
+async def put_job(job: Job, job_queue: JobQueue[Job] = Depends(get_job_queue)) -> Job:
     try:
-        await job_queue.put(program)
-        logger.info(f"Put job to queue: {program}")
+        await job_queue.put(job)
+        logger.info(f"Put job to queue: {job}")
     except JobAlreadyExistsError:
-        logger.info(f"Job already exists in queue: {program}")
+        logger.info(f"Job already exists in queue: {job}")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Job already exists in queue",
         )
 
-    return program
+    return job
 
 
 typer_app = typer.Typer()
@@ -110,8 +106,6 @@ def run_server(
         int, typer.Option(min=1, help="Number of workers to run")
     ] = 3,
 ):
-    fastapi_app.state.process_job = lambda program: download(
-        program=program, out_dir=out_dir
-    )
+    fastapi_app.state.process_job = lambda job: download(job=job, out_dir=out_dir)
     fastapi_app.state.num_workers = num_workers
     uvicorn.run(app=fastapi_app, host=host, port=port)

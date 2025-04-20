@@ -2,7 +2,7 @@ import requests
 from fastapi.encoders import jsonable_encoder
 from logzero import logger
 
-from radiko_timeshift_recorder.programs import Program
+from radiko_timeshift_recorder.job import Job
 
 
 class Client:
@@ -18,21 +18,21 @@ class Client:
         if self.session:
             self.session.close()
 
-    def put_job(self, program: Program):
+    def put_job(self, job: Job):
         if not self.session:
             raise RuntimeError("Session not initialized. Use 'with' statement.")
 
         response = self.session.post(
             url=f"{self.base_url}/job_queue",
             headers={"Content-Type": "application/json"},
-            json=jsonable_encoder(program),
+            json=jsonable_encoder(job),
         )
 
         if response.status_code == 201:
-            logger.info(f"Successfully put job: {program}")
+            logger.info(f"Successfully put job: {job}")
         elif response.status_code == 409:
-            logger.info(f"Job already exists: {program}")
+            logger.info(f"Job already exists: {job}")
         else:
             raise RuntimeError(
-                f"Failed to put job: {program}, status code: {response.status_code}, error: {response.text}"
+                f"Failed to put job: {job}, status code: {response.status_code}, error: {response.text}"
             )
