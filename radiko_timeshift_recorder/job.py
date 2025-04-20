@@ -25,7 +25,8 @@ class Job(BaseModel):
         return self.program.to < other.program.to
 
     @property
-    def is_finished(self) -> bool:
+    def is_ready_to_process(self) -> bool:
+        # Check if the program has already finished
         return self.program.to < datetime.datetime.now(ZoneInfo("Asia/Tokyo"))
 
     @property

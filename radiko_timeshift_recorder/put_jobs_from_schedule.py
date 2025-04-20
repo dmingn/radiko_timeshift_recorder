@@ -37,7 +37,9 @@ def put_jobs_from_schedule(
 
     with Client(server_url) as client:
         for job in [
-            job for job in sorted(jobs) if job.is_finished and rules.to_record(job=job)
+            job
+            for job in sorted(jobs)
+            if job.is_ready_to_process and rules.to_record(job=job)
         ]:
             try:
                 client.put_job(job)
