@@ -1,5 +1,4 @@
 import asyncio
-import errno
 import json
 from pathlib import Path
 
@@ -7,6 +6,7 @@ from logzero import logger
 
 from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import Program
+from radiko_timeshift_recorder.trim_filestem import trim_filestem
 
 
 def program_to_filename(program: Program) -> str:
@@ -27,18 +27,7 @@ def get_out_filepath(job: Job, out_dir: Path) -> Path:
         out_dir / job.program.title / program_to_filename(job.program)
     ).resolve()
 
-    while True:
-        try:
-            out_filepath.exists()
-        except OSError as e:
-            if e.errno == errno.ENAMETOOLONG:
-                out_filepath = out_filepath.with_stem(out_filepath.stem[:-1])
-            else:
-                raise e
-        else:
-            break
-
-    return out_filepath
+    return trim_filestem(out_filepath)
 
 
 async def get_duration(filepath: Path) -> float:
