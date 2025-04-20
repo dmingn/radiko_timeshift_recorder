@@ -3,8 +3,6 @@ services:
     build: .
     image: radiko_timeshift_recorder:latest
     pull_policy: build
-    env_file:
-      - ./.env
     user: "1000:1000"
     volumes:
       - type: bind
