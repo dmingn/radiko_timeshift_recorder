@@ -6,7 +6,6 @@ from zoneinfo import ZoneInfo
 import pytest
 from pydantic_yaml import to_yaml_str
 
-from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import Program, StationId
 from radiko_timeshift_recorder.rules import Rule, Rules
 
@@ -74,57 +73,53 @@ def test_rules_can_be_loaded_from_directory_contains_ymls():
 
 
 @pytest.mark.parametrize(
-    "job,expected",
+    "station_id,program,expected",
     [
         (
-            Job(
-                program=Program(
-                    to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                    ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                    id="id",
-                    dur=0,
-                    title="foooooo",
-                    pfm="",
-                ),
-                station_id="ABC",
+            "ABC",
+            Program(
+                to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                id="id",
+                dur=0,
+                title="foooooo",
+                pfm="",
             ),
             True,
         ),
         (
-            Job(
-                program=Program(
-                    to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                    ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                    id="id",
-                    dur=0,
-                    title="fo",
-                    pfm="",
-                ),
-                station_id="ABC",
+            "ABC",
+            Program(
+                to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                id="id",
+                dur=0,
+                title="fo",
+                pfm="",
             ),
             False,
         ),
         (
-            Job(
-                program=Program(
-                    to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                    ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
-                    id="id",
-                    dur=0,
-                    title="foooooo",
-                    pfm="",
-                ),
-                station_id="DEF",
+            "DEF",
+            Program(
+                to=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                ft=datetime.datetime.now(tz=ZoneInfo("Asia/Tokyo")),
+                id="id",
+                dur=0,
+                title="foooooo",
+                pfm="",
             ),
             False,
         ),
     ],
 )
-def test_rules_can_match_job_titles(job: Job, expected: bool):
+def test_rules_can_match_job_titles(
+    station_id: StationId, program: Program, expected: bool
+):
     rule = Rule(
         stations=frozenset({StationId("ABC")}),
         title_patterns=frozenset({r"foo+"}),
     )
     rules = Rules.model_validate(frozenset({rule}))
 
-    assert rules.to_record(job) is expected
+    assert rules.to_record(station_id=station_id, program=program) is expected
