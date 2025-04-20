@@ -1,7 +1,8 @@
 .PHONY: test
 test:
 	pipenv run mypy .
-	pipenv run python -m pytest -svx
+	pipenv run python -m pytest -svx -m "not radiko"
+	pipenv run python -m pytest -svx -m "radiko"
 
 .PHONY: up-server
 up-server:
