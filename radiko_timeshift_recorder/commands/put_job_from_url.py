@@ -6,10 +6,10 @@ from logzero import logger
 from radiko_timeshift_recorder.client import Client
 from radiko_timeshift_recorder.job import fetch_job_by_url
 
-typer_app = typer.Typer()
+app = typer.Typer()
 
 
-@typer_app.command()
+@app.command()
 def put_job_from_url(
     url: Annotated[str, typer.Argument(help="URL of the program to put job from")],
     server_url: Annotated[

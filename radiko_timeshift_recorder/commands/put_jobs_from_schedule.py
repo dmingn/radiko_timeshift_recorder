@@ -1,5 +1,3 @@
-import datetime
-import itertools
 from pathlib import Path
 from typing import Annotated
 
@@ -7,13 +5,13 @@ import typer
 from logzero import logger
 
 from radiko_timeshift_recorder.client import Client
-from radiko_timeshift_recorder.job import Jobs, fetch_all_jobs
+from radiko_timeshift_recorder.job import fetch_all_jobs
 from radiko_timeshift_recorder.rules import Rules
 
-typer_app = typer.Typer()
+app = typer.Typer()
 
 
-@typer_app.command()
+@app.command()
 def put_jobs_from_schedule(
     rules_path: Annotated[
         Path,
