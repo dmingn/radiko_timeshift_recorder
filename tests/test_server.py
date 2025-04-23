@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.job_queue import JobQueue
-from radiko_timeshift_recorder.server import fastapi_app, get_job_queue, lifespan
+from radiko_timeshift_recorder.server import app, get_job_queue, lifespan
 
 
 @pytest.fixture
@@ -18,12 +18,12 @@ def test_client_with_override() -> Generator[tuple[TestClient, JobQueue], Any, N
     def override_get_job_queue() -> JobQueue[Job]:
         return test_queue
 
-    fastapi_app.dependency_overrides[get_job_queue] = override_get_job_queue
-    client = TestClient(fastapi_app)
+    app.dependency_overrides[get_job_queue] = override_get_job_queue
+    client = TestClient(app)
 
     yield client, test_queue
 
-    fastapi_app.dependency_overrides.clear()
+    app.dependency_overrides.clear()
 
 
 def test_put_job_success(
