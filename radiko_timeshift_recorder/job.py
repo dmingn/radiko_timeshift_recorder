@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from functools import total_ordering
-from typing import Self
+from typing import Any, Generator, Self
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, RootModel
@@ -60,3 +60,16 @@ class Jobs(RootModel[frozenset[Job]]):
                 }
             )
         )
+
+
+def fetch_all_jobs() -> Generator[Job, Any, None]:
+    for i in range(8):
+        yield from Jobs.from_date(datetime.date.today() - datetime.timedelta(days=i))
+
+
+def fetch_job_by_url(url: str) -> Job:
+    for job in fetch_all_jobs():
+        if job.url == url:
+            return job
+
+    raise ValueError(f"Job not found for URL: {url}")

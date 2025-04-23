@@ -7,7 +7,7 @@ import typer
 from logzero import logger
 
 from radiko_timeshift_recorder.client import Client
-from radiko_timeshift_recorder.job import Jobs
+from radiko_timeshift_recorder.job import Jobs, fetch_all_jobs
 from radiko_timeshift_recorder.rules import Rules
 
 typer_app = typer.Typer()
@@ -28,17 +28,10 @@ def put_jobs_from_schedule(
 ):
     rules = Rules.from_yaml(rules_path)
 
-    jobs = itertools.chain.from_iterable(
-        [
-            Jobs.from_date(datetime.date.today() - datetime.timedelta(days=i))
-            for i in range(8)
-        ]
-    )
-
     with Client(server_url) as client:
         for job in [
             job
-            for job in sorted(jobs)
+            for job in sorted(fetch_all_jobs())
             if job.is_ready_to_process
             and rules.to_record(station_id=job.station_id, program=job.program)
         ]:
