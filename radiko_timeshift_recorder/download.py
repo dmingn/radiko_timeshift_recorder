@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import shlex
 import tempfile
@@ -8,6 +7,7 @@ from pathlib import Path
 import tenacity
 from logzero import logger
 
+from radiko_timeshift_recorder.get_duration import get_duration
 from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import Program
 from radiko_timeshift_recorder.trim_filestem import trim_filestem
@@ -32,21 +32,6 @@ def get_out_filepath(job: Job, out_dir: Path) -> Path:
     ).resolve()
 
     return trim_filestem(out_filepath)
-
-
-async def get_duration(filepath: Path) -> float:
-    proc = await asyncio.create_subprocess_exec(
-        "ffprobe",
-        "-hide_banner",
-        "-show_streams",
-        "-print_format",
-        "json",
-        shlex.quote(str(filepath.resolve())),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    stdout, _ = await proc.communicate()
-    return float(json.loads(stdout)["streams"][0]["duration"])
 
 
 async def download_stream(url: str, out_filepath: Path) -> None:
