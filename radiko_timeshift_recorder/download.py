@@ -70,7 +70,7 @@ async def download_stream(url: str, out_filepath: Path) -> None:
                 "copy",
                 "-format",
                 "mp4",
-                "-overwrite",
+                "-y",
                 shlex.quote(str(out_filepath.resolve())),
             ]
         ),
