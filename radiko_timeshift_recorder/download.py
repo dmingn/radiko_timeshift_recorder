@@ -7,6 +7,7 @@ from pathlib import Path
 import tenacity
 from logzero import logger
 
+from radiko_timeshift_recorder.get_duration import get_duration
 from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import Program
 from radiko_timeshift_recorder.trim_filestem import trim_filestem
