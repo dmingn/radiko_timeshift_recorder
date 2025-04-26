@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import shlex
 import tempfile
 from pathlib import Path
 
@@ -40,7 +41,7 @@ async def get_duration(filepath: Path) -> float:
         "-show_streams",
         "-print_format",
         "json",
-        str(filepath.resolve()),
+        shlex.quote(str(filepath.resolve())),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -49,17 +50,28 @@ async def get_duration(filepath: Path) -> float:
 
 
 async def download_stream(url: str, out_filepath: Path) -> None:
+    # Pipe streamlink's output directly to ffmpeg.
+    # This helps prevent issues where the end of the stream might be cut off
+    # if saved directly by streamlink alone.
     proc = await asyncio.create_subprocess_shell(
         cmd=" ".join(
             [
                 "python",
                 "-m",
                 "streamlink",
-                url,
+                shlex.quote(url),
                 "best",
-                "--force",
-                "--output",
-                f'"{out_filepath}"',
+                "--stdout",
+                "|",
+                "ffmpeg",
+                "-i",
+                "-",
+                "-codec",
+                "copy",
+                "-format",
+                "mp4",
+                "-overwrite",
+                shlex.quote(str(out_filepath.resolve())),
             ]
         ),
         stdout=asyncio.subprocess.PIPE,
