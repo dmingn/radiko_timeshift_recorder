@@ -24,23 +24,34 @@ rules_empty = Rules.model_validate(frozenset())
 rules_merged = Rules.model_validate(frozenset({rule_1, rule_2}))
 
 
-def test_rules_can_be_merged_using_or_operator():
-    rule_1 = Rule(
-        stations=frozenset({StationId("ABC")}),
-        title_patterns=frozenset({r"foo+"}),
-    )
-    rules_1 = Rules.model_validate(frozenset({rule_1}))
+@pytest.mark.parametrize(
+    ids=[
+        "merge_distinct",
+        "merge_empty_left",
+        "merge_empty_right",
+        "merge_empty_both",
+        "merge_overlapping",
+        "merge_subset_left",
+        "merge_subset_right",
+    ],
+    argnames="rules_a, rules_b, expected_rules",
+    argvalues=[
+        (rules_1, rules_2, rules_merged),
+        (rules_empty, rules_1, rules_1),
+        (rules_1, rules_empty, rules_1),
+        (rules_empty, rules_empty, rules_empty),
+        (rules_1, rules_1, rules_1),
+        (rules_merged, rules_1, rules_merged),
+        (rules_1, rules_merged, rules_merged),
+    ],
+)
+def test_rules_or_operator(rules_a: Rules, rules_b: Rules, expected_rules: Rules):
+    # --- Act ---
+    merged_rules = rules_a | rules_b
 
-    rule_2 = Rule(
-        stations=frozenset({StationId("DEF")}),
-        title_patterns=frozenset({r"bar"}),
-    )
-    rules_2 = Rules.model_validate(frozenset({rule_2}))
-
-    merged_rules = rules_1 | rules_2
-
-    assert rule_1 in merged_rules.root
-    assert rule_2 in merged_rules.root
+    # --- Assert ---
+    assert merged_rules == expected_rules
+    assert isinstance(merged_rules, Rules)
 
 
 @pytest.mark.parametrize(
