@@ -8,9 +8,9 @@ test:
 up-server:
 	docker compose up --build --remove-orphans
 
-.PHONY: put-jobs-from-schedule
-put-jobs-from-schedule:
-	docker compose exec app python -m radiko_timeshift_recorder put-jobs-from-schedule --rules rules
+.PHONY: put-jobs-from-schedule-by-rules
+put-jobs-from-schedule-by-rules:
+	docker compose exec app python -m radiko_timeshift_recorder put-jobs-from-schedule-by-rules rules/*.yaml
 
 .PHONY: clean
 clean:

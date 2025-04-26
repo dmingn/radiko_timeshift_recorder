@@ -12,11 +12,15 @@ app = typer.Typer()
 
 
 @app.command()
-def put_jobs_from_schedule(
-    rules_path: Annotated[
-        Path,
-        typer.Option(
-            "--rules", exists=True, help="Path to the rules YAML file or directory"
+def put_jobs_from_schedule_by_rules(
+    rules_yaml_paths: Annotated[
+        list[Path],
+        typer.Argument(
+            file_okay=True,
+            dir_okay=False,
+            exists=True,
+            readable=True,
+            help="Path to the rules YAML file",
         ),
     ],
     server_url: Annotated[
@@ -24,7 +28,7 @@ def put_jobs_from_schedule(
         typer.Option(help="URL of the server"),
     ] = "http://localhost:8000",
 ):
-    rules = Rules.from_yaml(rules_path)
+    rules = Rules.from_yaml_paths(rules_yaml_paths)
 
     with Client(server_url) as client:
         for job in [
