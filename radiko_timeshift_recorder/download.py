@@ -64,6 +64,7 @@ async def download_stream(url: str, out_filepath: Path) -> None:
                 "--stdout",
                 "|",
                 "ffmpeg",
+                "-hide_banner",
                 "-i",
                 "-",
                 "-codec",
