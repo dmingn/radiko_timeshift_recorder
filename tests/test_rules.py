@@ -25,24 +25,15 @@ rules_merged = Rules.model_validate(frozenset({rule_1, rule_2}))
 
 
 @pytest.mark.parametrize(
-    ids=[
-        "merge_distinct",
-        "merge_empty_left",
-        "merge_empty_right",
-        "merge_empty_both",
-        "merge_overlapping",
-        "merge_subset_left",
-        "merge_subset_right",
-    ],
-    argnames="rules_a, rules_b, expected_rules",
-    argvalues=[
-        (rules_1, rules_2, rules_merged),
-        (rules_empty, rules_1, rules_1),
-        (rules_1, rules_empty, rules_1),
-        (rules_empty, rules_empty, rules_empty),
-        (rules_1, rules_1, rules_1),
-        (rules_merged, rules_1, rules_merged),
-        (rules_1, rules_merged, rules_merged),
+    "rules_a, rules_b, expected_rules",
+    [
+        pytest.param(rules_1, rules_2, rules_merged, id="merge_distinct"),
+        pytest.param(rules_empty, rules_1, rules_1, id="merge_empty_left"),
+        pytest.param(rules_1, rules_empty, rules_1, id="merge_empty_right"),
+        pytest.param(rules_empty, rules_empty, rules_empty, id="merge_empty_both"),
+        pytest.param(rules_1, rules_1, rules_1, id="merge_overlapping"),
+        pytest.param(rules_merged, rules_1, rules_merged, id="merge_subset_left"),
+        pytest.param(rules_1, rules_merged, rules_merged, id="merge_subset_right"),
     ],
 )
 def test_rules_or_operator(rules_a: Rules, rules_b: Rules, expected_rules: Rules):
@@ -55,10 +46,9 @@ def test_rules_or_operator(rules_a: Rules, rules_b: Rules, expected_rules: Rules
 
 
 @pytest.mark.parametrize(
-    ids=["multiple_paths", "single_path", "no_paths", "one_empty_path"],
-    argnames="input_paths, mock_side_effect_map, expected_rules, expected_calls",
-    argvalues=[
-        (
+    "input_paths, mock_side_effect_map, expected_rules, expected_calls",
+    [
+        pytest.param(
             [Path("rules1.yaml"), Path("rules2.yaml")],
             {
                 Path("rules1.yaml"): rules_1,
@@ -69,24 +59,28 @@ def test_rules_or_operator(rules_a: Rules, rules_b: Rules, expected_rules: Rules
                 call(Rules, Path("rules1.yaml")),
                 call(Rules, Path("rules2.yaml")),
             ],
+            id="multiple_paths",
         ),
-        (
+        pytest.param(
             [Path("rules.yaml")],
             {Path("rules.yaml"): rules_1},
             rules_1,
             [call(Rules, Path("rules.yaml"))],
+            id="single_path",
         ),
-        (
+        pytest.param(
             [],
             {},
             rules_empty,
             [],
+            id="no_paths",
         ),
-        (
+        pytest.param(
             [Path("rules1.yaml"), Path("empty.yaml")],
             {Path("rules1.yaml"): rules_1, Path("empty.yaml"): rules_empty},
             rules_1,
             [call(Rules, Path("rules1.yaml")), call(Rules, Path("empty.yaml"))],
+            id="one_empty_path",
         ),
     ],
 )
