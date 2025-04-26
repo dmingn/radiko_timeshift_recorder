@@ -4,6 +4,7 @@ from unittest.mock import call
 from zoneinfo import ZoneInfo
 
 import pytest
+from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
 from radiko_timeshift_recorder.radiko import Program, StationId
@@ -102,6 +103,50 @@ def test_rules_from_yaml_paths(
     assert result_rules == expected_rules
     assert mock_parse_yaml.call_count == len(expected_calls)
     mock_parse_yaml.assert_has_calls(expected_calls, any_order=False)
+
+
+@pytest.mark.parametrize(
+    "input_paths, mock_side_effect, expected_exception, expected_calls_before_error",
+    [
+        pytest.param(
+            [Path("rules1.yaml"), Path("not_found.yaml")],
+            [
+                rules_1,
+                FileNotFoundError("File not found!"),
+            ],
+            FileNotFoundError,
+            [call(Rules, Path("rules1.yaml"))],
+            id="file_not_found",
+        ),
+        pytest.param(
+            [Path("rules1.yaml"), Path("invalid_schema.yaml")],
+            [
+                rules_1,
+                ValidationError.from_exception_data("Rules", []),
+            ],
+            ValidationError,
+            [call(Rules, Path("rules1.yaml"))],
+            id="validation_error",
+        ),
+    ],
+)
+def test_rules_from_yaml_paths_errors(
+    mocker: MockerFixture,
+    input_paths: list[Path],
+    mock_side_effect: list,
+    expected_exception: type[Exception],
+    expected_calls_before_error: list,
+):
+    # --- Arrange ---
+    mock_parse_yaml = mocker.patch("radiko_timeshift_recorder.rules.parse_yaml_file_as")
+    mock_parse_yaml.side_effect = mock_side_effect
+
+    # --- Act & Assert ---
+    with pytest.raises(expected_exception):
+        Rules.from_yaml_paths(input_paths)
+
+    assert mock_parse_yaml.call_count == len(expected_calls_before_error) + 1
+    mock_parse_yaml.assert_has_calls(expected_calls_before_error, any_order=False)
 
 
 @pytest.mark.parametrize(
