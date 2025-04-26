@@ -12,7 +12,7 @@ app = typer.Typer()
 
 
 @app.command()
-def put_jobs_from_schedule(
+def put_jobs_from_schedule_by_rules(
     rules_yaml_paths: Annotated[
         list[Path],
         typer.Option(
