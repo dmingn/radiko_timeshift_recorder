@@ -41,11 +41,20 @@ async def get_duration(filepath: Path) -> float:
         "-show_streams",
         "-print_format",
         "json",
-        shlex.quote(str(filepath.resolve())),
+        str(filepath.resolve()),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    stdout, _ = await proc.communicate()
+
+    stdout, stderr = await proc.communicate()
+
+    if proc.returncode != 0:
+        logger.debug(f"stdout: {stdout.decode().strip()}")
+        logger.debug(f"stderr: {stderr.decode().strip()}")
+        raise RuntimeError(
+            f"Failed to get duration of {filepath}: {stderr.decode().strip()}"
+        )
+
     return float(json.loads(stdout)["streams"][0]["duration"])
 
 
