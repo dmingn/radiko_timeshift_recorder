@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import itertools
 import operator
 import re
 from functools import reduce
 from pathlib import Path
+from typing import Iterable
 
 from pydantic import BaseModel, ConfigDict, RootModel
 from pydantic_yaml import parse_yaml_file_as
@@ -27,20 +27,12 @@ class Rules(RootModel[frozenset[Rule]]):
         return Rules.model_validate(self.root | other.root)
 
     @classmethod
-    def from_yaml(cls, yaml_path: Path) -> Rules:
-        if yaml_path.is_dir():
-            return reduce(
-                operator.or_,
-                (
-                    parse_yaml_file_as(cls, p)
-                    for p in itertools.chain(
-                        yaml_path.glob("*.yaml"), yaml_path.glob("*.yml")
-                    )
-                ),
-                cls(root=frozenset()),
-            )
-        else:
-            return parse_yaml_file_as(cls, yaml_path)
+    def from_yaml_paths(cls, yaml_paths: Iterable[Path]) -> Rules:
+        return reduce(
+            operator.or_,
+            (parse_yaml_file_as(cls, p) for p in yaml_paths),
+            cls(root=frozenset()),
+        )
 
     def to_record(self, station_id: StationId, program: Program) -> bool:
         for rule in self.root:
