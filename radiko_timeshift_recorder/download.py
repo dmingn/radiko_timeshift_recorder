@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import shlex
 import tempfile
 from pathlib import Path
 
@@ -40,7 +41,7 @@ async def get_duration(filepath: Path) -> float:
         "-show_streams",
         "-print_format",
         "json",
-        str(filepath.resolve()),
+        shlex.quote(str(filepath.resolve())),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -58,7 +59,7 @@ async def download_stream(url: str, out_filepath: Path) -> None:
                 "python",
                 "-m",
                 "streamlink",
-                f"'{url}'",
+                shlex.quote(url),
                 "best",
                 "--stdout",
                 "|",
@@ -70,7 +71,7 @@ async def download_stream(url: str, out_filepath: Path) -> None:
                 "-format",
                 "mp4",
                 "-overwrite",
-                f"'{out_filepath}'",
+                shlex.quote(str(out_filepath.resolve())),
             ]
         ),
         stdout=asyncio.subprocess.PIPE,
