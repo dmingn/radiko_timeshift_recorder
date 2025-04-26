@@ -3,6 +3,7 @@ from typing import Annotated
 
 import typer
 import uvicorn
+from logzero import logger
 
 from radiko_timeshift_recorder.download import download
 from radiko_timeshift_recorder.server import app as fastapi_app
@@ -28,6 +29,10 @@ def run_server(
         int, typer.Option(min=1, help="Number of workers to run")
     ] = 3,
 ):
-    fastapi_app.state.process_job = lambda job: download(job=job, out_dir=out_dir)
-    fastapi_app.state.num_workers = num_workers
-    uvicorn.run(app=fastapi_app, host=host, port=port)
+    try:
+        fastapi_app.state.process_job = lambda job: download(job=job, out_dir=out_dir)
+        fastapi_app.state.num_workers = num_workers
+        uvicorn.run(app=fastapi_app, host=host, port=port)
+    except Exception:
+        logger.exception("Failed to run server")
+        raise typer.Exit(1)

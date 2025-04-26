@@ -5,6 +5,7 @@ from functools import total_ordering
 from typing import Any, Generator, Self
 from zoneinfo import ZoneInfo
 
+from logzero import logger
 from pydantic import BaseModel, ConfigDict, RootModel
 
 from radiko_timeshift_recorder.radiko import (
@@ -64,7 +65,12 @@ class Jobs(RootModel[frozenset[Job]]):
 
 def fetch_all_jobs() -> Generator[Job, Any, None]:
     for i in range(8):
-        yield from Jobs.from_date(datetime.date.today() - datetime.timedelta(days=i))
+        date = datetime.date.today() - datetime.timedelta(days=i)
+        try:
+            yield from Jobs.from_date(date)
+        except Exception as e:
+            logger.exception(f"Failed to fetch schedule for {date}: {e}")
+            continue
 
 
 def fetch_job_by_url(url: str) -> Job:
