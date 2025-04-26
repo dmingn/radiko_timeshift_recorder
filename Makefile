@@ -10,7 +10,7 @@ up-server:
 
 .PHONY: put-jobs-from-schedule-by-rules
 put-jobs-from-schedule-by-rules:
-	docker compose exec app python -m radiko_timeshift_recorder put-jobs-from-schedule-by-rules --rules rules/*.yaml
+	docker compose exec app python -m radiko_timeshift_recorder put-jobs-from-schedule-by-rules rules/*.yaml
 
 .PHONY: clean
 clean:

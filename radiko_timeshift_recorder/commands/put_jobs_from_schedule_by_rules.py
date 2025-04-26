@@ -15,14 +15,12 @@ app = typer.Typer()
 def put_jobs_from_schedule_by_rules(
     rules_yaml_paths: Annotated[
         list[Path],
-        typer.Option(
-            "--rules",
+        typer.Argument(
             file_okay=True,
             dir_okay=False,
             exists=True,
             readable=True,
             help="Path to the rules YAML file",
-            min_items=1,
         ),
     ],
     server_url: Annotated[
