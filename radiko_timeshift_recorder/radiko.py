@@ -22,23 +22,17 @@ class OutOfAreaError(Exception):
 
 @functools.cache
 def fetch_area_id() -> AreaId:
-    try:
-        response = requests.get("https://radiko.jp/area", timeout=10)
-    except requests.exceptions.RequestException as e:
-        logger.error(f"HTTP request error: {e}")
-        raise
+    response = requests.get("https://radiko.jp/area", timeout=10)
 
     response.encoding = response.apparent_encoding
     match = re.search(r'class="(.+)"', response.text)
     if not match:
-        logger.error(f"Failed to parse area ID: {response.text}")
-        raise ValueError("Failed to retrieve area ID.")
+        raise ValueError("Failed to parse area ID: {response.text}")
 
     area_id = match.groups()[0]
     logger.info(f"Retrieved area ID: {area_id}")
 
     if area_id == "OUT":
-        logger.warning("Out of area. Raising an error.")
         raise OutOfAreaError("Out of area.")
 
     return AreaId(area_id)

@@ -18,14 +18,18 @@ def put_job_from_url(
     ] = "http://localhost:8000",
 ):
     try:
-        job = fetch_job_by_url(url)
-    except ValueError as e:
-        logger.exception(f"Failed to fetch job from URL: {url}, error: {e}")
-        raise typer.Exit(1)
-
-    with Client(server_url) as client:
         try:
-            client.put_job(job)
-        except Exception as e:
-            logger.exception(f"Failed to put job: {job}, error: {e}")
+            job = fetch_job_by_url(url)
+        except Exception:
+            logger.exception(f"Failed to fetch job from URL: {url}")
             raise typer.Exit(1)
+
+        with Client(server_url) as client:
+            try:
+                client.put_job(job)
+            except Exception:
+                logger.exception(f"Failed to put job: {job}")
+                raise typer.Exit(1)
+    except Exception:
+        logger.exception(f"Failed to put job from URL: {url}")
+        raise typer.Exit(1)
