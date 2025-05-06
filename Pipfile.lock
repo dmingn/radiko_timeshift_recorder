@@ -674,11 +674,11 @@
         },
         "rich": {
             "hashes": [
-                "sha256:439594978a49a09530cff7ebc4b5c7103ef57baf48d5ea3184f21d9a2befa098",
-                "sha256:6049d5e6ec054bf2779ab3358186963bac2ea89175919d699e378b99738c2a90"
+                "sha256:1c9491e1951aac09caffd42f448ee3d04e58923ffe14993f6e83068dc395d7e0",
+                "sha256:82f1bc23a6a21ebca4ae0c45af9bdbc492ed20231dcb63f297d6d1021a9d5725"
             ],
             "markers": "python_full_version >= '3.8.0'",
-            "version": "==13.9.4"
+            "version": "==14.0.0"
         },
         "ruamel.yaml": {
             "hashes": [
@@ -809,12 +809,12 @@
         },
         "typer": {
             "hashes": [
-                "sha256:46a499c6107d645a9c13f7ee46c5d5096cae6f5fc57dd11eccbbb9ae3e44ddfc",
-                "sha256:ab2fab47533a813c49fe1f16b1a370fd5819099c00b119e0633df65f22144ba5"
+                "sha256:818873625d0569653438316567861899f7e9972f2e6e0c16dab608345ced713c",
+                "sha256:c86a65ad77ca531f03de08d1b9cb67cd09ad02ddddf4b34745b5008f43b239bd"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.7'",
-            "version": "==0.15.2"
+            "version": "==0.15.3"
         },
         "typing-extensions": {
             "hashes": [
