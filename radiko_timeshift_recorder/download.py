@@ -20,7 +20,7 @@ def generate_filename_candidates(program: Program) -> tuple[str, ...]:
         program.title.replace("/", "／"),
     ] + ([program.pfm.replace("/", "／")] if program.pfm else [])
 
-    return tuple(" - ".join(name_parts[i]) for i in range(len(name_parts), 0, -1))
+    return tuple(" - ".join(name_parts[:i]) for i in range(len(name_parts), 0, -1))
 
 
 async def download_stream(url: str, out_filepath: Path) -> None:

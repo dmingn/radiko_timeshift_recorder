@@ -1,10 +1,98 @@
+import datetime
 import errno
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 from pytest_mock import MockerFixture
 
-from radiko_timeshift_recorder.download import try_rename_with_candidates
+from radiko_timeshift_recorder.download import (
+    generate_filename_candidates,
+    try_rename_with_candidates,
+)
+from radiko_timeshift_recorder.radiko import Program
+
+
+@pytest.mark.parametrize(
+    "ft_str_yyyymmddhhmmss, title, pfm, expected_candidates",
+    [
+        pytest.param(
+            "20230101100000",
+            "Test Show / Special",
+            "Test Artist / Group",
+            (
+                "2023-01-01 10-00-00 - Test Show ／ Special - Test Artist ／ Group",
+                "2023-01-01 10-00-00 - Test Show ／ Special",
+                "2023-01-01 10-00-00",
+            ),
+            id="with_pfm",
+        ),
+        pytest.param(
+            "20230102113015",
+            "Another Show",
+            None,
+            (
+                "2023-01-02 11-30-15 - Another Show",
+                "2023-01-02 11-30-15",
+            ),
+            id="without_pfm",
+        ),
+        pytest.param(
+            "20230103120000",
+            "Title Only Show",
+            "",
+            (
+                "2023-01-03 12-00-00 - Title Only Show",
+                "2023-01-03 12-00-00",
+            ),
+            id="with_empty_string_pfm",
+        ),
+        pytest.param(
+            "20240520000000",
+            "",
+            "Performer",
+            (
+                "2024-05-20 00-00-00 -  - Performer",
+                "2024-05-20 00-00-00 - ",
+                "2024-05-20 00-00-00",
+            ),
+            id="with_empty_string_title_and_pfm",
+        ),
+    ],
+)
+def test_generate_filename_candidates(
+    ft_str_yyyymmddhhmmss: str,
+    title: str,
+    pfm: str | None,
+    expected_candidates: tuple[str, ...],
+):
+    """
+    Tests generate_filename_candidates with various inputs for program details.
+    It checks for correct filename generation including:
+    - With performer (pfm).
+    - Without performer (pfm is None).
+    - With performer as an empty string.
+    - With title as an empty string.
+    - Slash replacement in title and pfm.
+    """
+    program_id_for_test = "test_prog_id"
+    duration_seconds_for_test = 3600
+
+    ft_datetime = datetime.datetime.strptime(
+        ft_str_yyyymmddhhmmss, "%Y%m%d%H%M%S"
+    ).replace(tzinfo=ZoneInfo("Asia/Tokyo"))
+    to_datetime = ft_datetime + datetime.timedelta(seconds=duration_seconds_for_test)
+
+    program = Program(
+        id=program_id_for_test,
+        ft=ft_datetime,
+        to=to_datetime,
+        dur=duration_seconds_for_test,
+        title=title,
+        pfm=pfm,
+    )
+
+    assert generate_filename_candidates(program) == expected_candidates
 
 
 def test_try_rename_with_candidates_success_first_try(mocker: MockerFixture) -> None:
