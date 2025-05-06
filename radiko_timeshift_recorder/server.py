@@ -24,7 +24,7 @@ async def worker(
 
     while True:
         job = await job_queue.get()
-        logger.info(f"Worker-{id} received job: {job}")
+        logger.debug(f"Worker-{id} received job: {job}")
 
         try:
             await process_job(job)
@@ -32,7 +32,7 @@ async def worker(
             logger.exception(f"Worker-{id} failed to process job: {job}, error: {e}")
 
         job_queue.mark_done(job)
-        logger.info(f"Worker-{id} finished job: {job}")
+        logger.debug(f"Worker-{id} finished job: {job}")
 
 
 @asynccontextmanager
