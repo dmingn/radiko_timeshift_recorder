@@ -1,8 +1,10 @@
 import asyncio
+import errno
 import logging
 import shlex
 import tempfile
 from pathlib import Path
+from typing import Optional
 
 import tenacity
 from logzero import logger
@@ -10,28 +12,15 @@ from logzero import logger
 from radiko_timeshift_recorder.get_duration import get_duration
 from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import Program
-from radiko_timeshift_recorder.trim_filestem import trim_filestem
 
 
-def program_to_filename(program: Program) -> str:
-    return (
-        " - ".join(
-            [
-                program.ft.strftime("%Y-%m-%d %H-%M-%S"),
-                program.title.replace("/", "／"),
-            ]
-            + ([program.pfm.replace("/", "／")] if program.pfm else [])
-        )
-        + ".mp4"
-    )
+def generate_filename_candidates(program: Program) -> tuple[str, ...]:
+    name_parts = [
+        program.ft.strftime("%Y-%m-%d %H-%M-%S"),
+        program.title.replace("/", "／"),
+    ] + ([program.pfm.replace("/", "／")] if program.pfm else [])
 
-
-def get_out_filepath(job: Job, out_dir: Path) -> Path:
-    out_filepath = (
-        out_dir / job.station_id / job.program.title / program_to_filename(job.program)
-    ).resolve()
-
-    return trim_filestem(out_filepath)
+    return tuple(" - ".join(name_parts[i]) for i in range(len(name_parts), 0, -1))
 
 
 async def download_stream(url: str, out_filepath: Path) -> None:
@@ -74,24 +63,51 @@ async def download_stream(url: str, out_filepath: Path) -> None:
         )
 
 
+def try_rename_with_candidates(
+    temp_filepath: Path, out_filepath_candidates: list[Path]
+) -> None:
+    name_too_long_exception: Optional[OSError] = None
+    for out_filepath in out_filepath_candidates:
+        try:
+            temp_filepath.replace(out_filepath)
+            return
+        except OSError as e:
+            if e.errno == errno.ENAMETOOLONG:
+                name_too_long_exception = e
+                continue
+            else:
+                raise e
+
+    if name_too_long_exception:
+        raise name_too_long_exception
+
+
 @tenacity.retry(
     stop=tenacity.stop_after_attempt(max_attempt_number=3),
     wait=tenacity.wait_fixed(wait=60),
     before_sleep=tenacity.before_sleep_log(logger=logger, log_level=logging.INFO),
 )
 async def download(job: Job, out_dir: Path) -> None:
-    out_filepath = get_out_filepath(job, out_dir)
+    program_dir = out_dir / job.station_id / job.program.title
+    filename_candidates = generate_filename_candidates(job.program)
+    suffix = ".mp4"
 
-    if out_filepath.exists():
-        logger.info(f"File {out_filepath} already exists. Skipping download.")
-        return
+    out_filepath_candidates = [
+        program_dir.joinpath(filename).with_suffix(suffix)
+        for filename in filename_candidates
+    ]
 
-    out_filepath.parent.mkdir(parents=True, exist_ok=True)
+    for out_filepath in out_filepath_candidates:
+        if out_filepath.exists():
+            logger.info(f"File {out_filepath} already exists. Skipping download.")
+            return
+
+    program_dir.mkdir(parents=True, exist_ok=True)
 
     with tempfile.NamedTemporaryFile(
         mode="w+b",
-        suffix=out_filepath.suffix,
-        dir=out_filepath.parent,
+        suffix=suffix,
+        dir=program_dir,
         delete=True,
     ) as tmp_file:
         temp_filepath = Path(tmp_file.name)
@@ -105,4 +121,4 @@ async def download(job: Job, out_dir: Path) -> None:
                 f"Recorded duration {recorded_dur} differs from the program duration {job.program.dur}."
             )
 
-        temp_filepath.replace(out_filepath)
+        try_rename_with_candidates(temp_filepath, out_filepath_candidates)
