@@ -3,6 +3,7 @@ from typing import Annotated
 
 import typer
 from logzero import logger
+from requests import HTTPError
 
 from radiko_timeshift_recorder.client import Client
 from radiko_timeshift_recorder.job import fetch_all_jobs
@@ -56,8 +57,15 @@ def put_jobs_from_schedule_by_rules(
             for job in jobs_to_record:
                 try:
                     client.put_job(job)
-                except Exception as e:
-                    logger.exception(f"Failed to put job: {job}, error: {e}")
+                except HTTPError as e:
+                    if e.response.status_code == 409:
+                        logger.debug(f"Job already exists: {job}")
+                    else:
+                        logger.exception(f"Failed to put job: {job}")
+
+                    continue
+                except Exception:
+                    logger.exception(f"Failed to put job: {job}")
                     continue
     except typer.Exit:
         raise

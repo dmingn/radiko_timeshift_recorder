@@ -1,6 +1,5 @@
 import requests
 from fastapi.encoders import jsonable_encoder
-from logzero import logger
 
 from radiko_timeshift_recorder.job import Job
 
@@ -28,11 +27,7 @@ class Client:
             json=jsonable_encoder(job),
         )
 
-        if response.status_code == 201:
-            logger.info(f"Successfully put job: {job}")
-        elif response.status_code == 409:
-            logger.info(f"Job already exists: {job}")
-        else:
-            raise RuntimeError(
-                f"Failed to put job: {job}, status code: {response.status_code}, error: {response.text}"
-            )
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise e

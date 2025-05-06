@@ -2,6 +2,7 @@ from typing import Annotated
 
 import typer
 from logzero import logger
+from requests import HTTPError
 
 from radiko_timeshift_recorder.client import Client
 from radiko_timeshift_recorder.job import fetch_job_by_url
@@ -27,6 +28,12 @@ def put_job_from_url(
         with Client(server_url) as client:
             try:
                 client.put_job(job)
+            except HTTPError as e:
+                if e.response.status_code == 409:
+                    logger.info(f"Job already exists: {job}")
+                else:
+                    logger.exception(f"Failed to put job: {job}")
+                    raise typer.Exit(1)
             except Exception:
                 logger.exception(f"Failed to put job: {job}")
                 raise typer.Exit(1)
