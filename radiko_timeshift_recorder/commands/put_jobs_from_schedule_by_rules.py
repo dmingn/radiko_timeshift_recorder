@@ -3,9 +3,10 @@ from typing import Annotated
 
 import typer
 from logzero import logger
+from requests import HTTPError
 
 from radiko_timeshift_recorder.client import Client
-from radiko_timeshift_recorder.job import fetch_all_jobs
+from radiko_timeshift_recorder.job import Job, fetch_all_jobs
 from radiko_timeshift_recorder.rules import Rules
 
 app = typer.Typer()
@@ -52,13 +53,42 @@ def put_jobs_from_schedule_by_rules(
             logger.exception(f"Failed to filter jobs by rules: {rules_yaml_paths}")
             raise typer.Exit(1)
 
+        jobs_succeed: list[Job] = []
+        jobs_already_exist: list[Job] = []
+        jobs_failed: list[Job] = []
         with Client(server_url) as client:
             for job in jobs_to_record:
                 try:
                     client.put_job(job)
-                except Exception as e:
-                    logger.exception(f"Failed to put job: {job}, error: {e}")
+                except HTTPError as e:
+                    if e.response.status_code == 409:
+                        logger.debug(f"Job already exists: {job}")
+                        jobs_already_exist.append(job)
+                    else:
+                        logger.exception(f"Failed to put job: {job}")
+                        jobs_failed.append(job)
+
                     continue
+                except Exception:
+                    logger.exception(f"Failed to put job: {job}")
+                    jobs_failed.append(job)
+                    continue
+                else:
+                    jobs_succeed.append(job)
+
+        if jobs_succeed:
+            logger.info(f"Successfully put {len(jobs_succeed)} jobs.")
+
+        if jobs_already_exist:
+            logger.info(
+                f"Skipped {len(jobs_already_exist)} jobs because they already exist."
+            )
+
+        if jobs_failed:
+            logger.error(f"Failed to put {len(jobs_failed)} jobs.")
+            raise typer.Exit(1)
+    except typer.Exit:
+        raise
     except Exception:
         logger.exception(
             f"Failed to put jobs from schedule by rules: {rules_yaml_paths}"

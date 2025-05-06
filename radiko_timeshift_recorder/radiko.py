@@ -30,7 +30,7 @@ def fetch_area_id() -> AreaId:
         raise ValueError("Failed to parse area ID: {response.text}")
 
     area_id = match.groups()[0]
-    logger.info(f"Retrieved area ID: {area_id}")
+    logger.debug(f"Retrieved area ID: {area_id}")
 
     if area_id == "OUT":
         raise OutOfAreaError("Out of area.")
