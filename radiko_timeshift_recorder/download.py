@@ -106,3 +106,5 @@ async def download(job: Job, out_dir: Path) -> None:
             )
 
         temp_filepath.replace(out_filepath)
+
+    logger.info(f"Downloaded {job} to {out_filepath}")
