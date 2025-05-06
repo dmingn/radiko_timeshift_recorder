@@ -27,7 +27,4 @@ class Client:
             json=jsonable_encoder(job),
         )
 
-        try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            raise e
+        response.raise_for_status()
