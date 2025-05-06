@@ -28,8 +28,8 @@ async def worker(
 
         try:
             await process_job(job)
-        except Exception as e:
-            logger.exception(f"Worker-{id} failed to process job: {job}, error: {e}")
+        except Exception:
+            logger.exception(f"Worker-{id} failed to process job: {job}")
 
         job_queue.mark_done(job)
         logger.debug(f"Worker-{id} finished job: {job}")
