@@ -24,15 +24,15 @@ async def worker(
 
     while True:
         job = await job_queue.get()
-        logger.info(f"Worker-{id} received job: {job}")
+        logger.debug(f"Worker-{id} received job: {job}")
 
         try:
             await process_job(job)
-        except Exception as e:
-            logger.exception(f"Worker-{id} failed to process job: {job}, error: {e}")
+        except Exception:
+            logger.exception(f"Worker-{id} failed to process job: {job}")
 
         job_queue.mark_done(job)
-        logger.info(f"Worker-{id} finished job: {job}")
+        logger.debug(f"Worker-{id} finished job: {job}")
 
 
 @asynccontextmanager
@@ -72,7 +72,7 @@ async def put_job(job: Job, job_queue: JobQueue[Job] = Depends(get_job_queue)) -
         await job_queue.put(job)
         logger.info(f"Put job to queue: {job}")
     except JobAlreadyExistsError:
-        logger.info(f"Job already exists in queue: {job}")
+        logger.debug(f"Job already exists in queue: {job}")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Job already exists in queue",

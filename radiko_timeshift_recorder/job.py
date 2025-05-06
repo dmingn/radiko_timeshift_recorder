@@ -68,8 +68,8 @@ def fetch_all_jobs() -> Generator[Job, Any, None]:
         date = datetime.date.today() - datetime.timedelta(days=i)
         try:
             yield from Jobs.from_date(date)
-        except Exception as e:
-            logger.exception(f"Failed to fetch schedule for {date}: {e}")
+        except Exception:
+            logger.exception(f"Failed to fetch schedule for {date}")
             continue
 
 
