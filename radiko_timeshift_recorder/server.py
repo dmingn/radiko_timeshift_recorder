@@ -72,7 +72,7 @@ async def put_job(job: Job, job_queue: JobQueue[Job] = Depends(get_job_queue)) -
         await job_queue.put(job)
         logger.info(f"Put job to queue: {job}")
     except JobAlreadyExistsError:
-        logger.info(f"Job already exists in queue: {job}")
+        logger.debug(f"Job already exists in queue: {job}")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Job already exists in queue",
