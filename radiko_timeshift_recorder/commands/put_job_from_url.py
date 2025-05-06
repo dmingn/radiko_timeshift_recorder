@@ -30,6 +30,8 @@ def put_job_from_url(
             except Exception:
                 logger.exception(f"Failed to put job: {job}")
                 raise typer.Exit(1)
+    except typer.Exit:
+        raise
     except Exception:
         logger.exception(f"Failed to put job from URL: {url}")
         raise typer.Exit(1)

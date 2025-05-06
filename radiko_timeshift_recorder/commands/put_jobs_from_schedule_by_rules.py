@@ -59,6 +59,8 @@ def put_jobs_from_schedule_by_rules(
                 except Exception as e:
                     logger.exception(f"Failed to put job: {job}, error: {e}")
                     continue
+    except typer.Exit:
+        raise
     except Exception:
         logger.exception(
             f"Failed to put jobs from schedule by rules: {rules_yaml_paths}"
