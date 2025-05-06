@@ -122,3 +122,5 @@ async def download(job: Job, out_dir: Path) -> None:
             )
 
         try_rename_with_candidates(temp_filepath, out_filepath_candidates)
+
+    logger.info(f"Downloaded {job} to {out_filepath}")
