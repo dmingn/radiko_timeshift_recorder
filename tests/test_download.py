@@ -104,9 +104,10 @@ def test_try_rename_with_candidates_success_first_try(mocker: MockerFixture) -> 
     ]
     mock_replace = mocker.patch.object(Path, "replace")
 
-    try_rename_with_candidates(temp_filepath, out_filepath_candidates)
+    returned_path = try_rename_with_candidates(temp_filepath, out_filepath_candidates)
 
     mock_replace.assert_called_once_with(out_filepath_candidates[0])
+    assert returned_path == out_filepath_candidates[0]
 
 
 def test_try_rename_with_candidates_success_second_try(mocker: MockerFixture) -> None:
@@ -122,7 +123,7 @@ def test_try_rename_with_candidates_success_second_try(mocker: MockerFixture) ->
         None,  # Second call succeeds
     ]
 
-    try_rename_with_candidates(temp_filepath, out_filepath_candidates)
+    returned_path = try_rename_with_candidates(temp_filepath, out_filepath_candidates)
 
     assert mock_replace.call_count == 2
     mock_replace.assert_has_calls(
@@ -131,6 +132,7 @@ def test_try_rename_with_candidates_success_second_try(mocker: MockerFixture) ->
             mocker.call(out_filepath_candidates[1]),
         ]
     )
+    assert returned_path == out_filepath_candidates[1]
 
 
 def test_try_rename_with_candidates_fail_all_name_too_long(
