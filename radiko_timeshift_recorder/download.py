@@ -65,12 +65,15 @@ async def download_stream(url: str, out_filepath: Path) -> None:
 
 def try_rename_with_candidates(
     temp_filepath: Path, out_filepath_candidates: list[Path]
-) -> None:
+) -> Path:
+    if not out_filepath_candidates:
+        raise ValueError("out_filepath_candidates list cannot be empty.")
+
     name_too_long_exception: Optional[OSError] = None
-    for out_filepath in out_filepath_candidates:
+    for out_filepath_candidate in out_filepath_candidates:
         try:
-            temp_filepath.replace(out_filepath)
-            return
+            temp_filepath.replace(out_filepath_candidate)
+            return out_filepath_candidate
         except OSError as e:
             if e.errno == errno.ENAMETOOLONG:
                 name_too_long_exception = e
@@ -80,6 +83,10 @@ def try_rename_with_candidates(
 
     if name_too_long_exception:
         raise name_too_long_exception
+
+    raise RuntimeError(
+        "try_rename_with_candidates reached an unexpected state. This should not happen."
+    )
 
 
 @tenacity.retry(
@@ -97,9 +104,11 @@ async def download(job: Job, out_dir: Path) -> None:
         for filename in filename_candidates
     ]
 
-    for out_filepath in out_filepath_candidates:
-        if out_filepath.exists():
-            logger.info(f"File {out_filepath} already exists. Skipping download.")
+    for filepath_to_check_existence in out_filepath_candidates:
+        if filepath_to_check_existence.exists():
+            logger.info(
+                f"File {filepath_to_check_existence} already exists. Skipping download."
+            )
             return
 
     program_dir.mkdir(parents=True, exist_ok=True)
@@ -121,6 +130,8 @@ async def download(job: Job, out_dir: Path) -> None:
                 f"Recorded duration {recorded_dur} differs from the program duration {job.program.dur}."
             )
 
-        try_rename_with_candidates(temp_filepath, out_filepath_candidates)
+        out_filepath = try_rename_with_candidates(
+            temp_filepath, out_filepath_candidates
+        )
 
     logger.info(f"Downloaded {job} to {out_filepath}")
