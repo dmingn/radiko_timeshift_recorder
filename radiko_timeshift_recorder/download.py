@@ -104,9 +104,11 @@ async def download(job: Job, out_dir: Path) -> None:
         for filename in filename_candidates
     ]
 
-    for out_filepath in out_filepath_candidates:
-        if out_filepath.exists():
-            logger.info(f"File {out_filepath} already exists. Skipping download.")
+    for filepath_to_check_existence in out_filepath_candidates:
+        if filepath_to_check_existence.exists():
+            logger.info(
+                f"File {filepath_to_check_existence} already exists. Skipping download."
+            )
             return
 
     program_dir.mkdir(parents=True, exist_ok=True)
