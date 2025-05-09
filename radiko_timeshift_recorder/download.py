@@ -66,6 +66,9 @@ async def download_stream(url: str, out_filepath: Path) -> None:
 def try_rename_with_candidates(
     temp_filepath: Path, out_filepath_candidates: list[Path]
 ) -> Path:
+    if not out_filepath_candidates:
+        raise ValueError("out_filepath_candidates list cannot be empty.")
+
     name_too_long_exception: Optional[OSError] = None
     for out_filepath_candidate in out_filepath_candidates:
         try:

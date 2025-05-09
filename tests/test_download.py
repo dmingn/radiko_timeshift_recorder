@@ -152,6 +152,16 @@ def test_try_rename_with_candidates_fail_all_name_too_long(
     mock_replace.assert_has_calls([mocker.call(p) for p in out_filepath_candidates])
 
 
+def test_try_rename_with_candidates_empty_list() -> None:
+    """Test case where the list of output filepath candidates is empty."""
+    temp_filepath = Path("/tmp/tempfile")
+
+    with pytest.raises(
+        ValueError, match="out_filepath_candidates list cannot be empty"
+    ):
+        try_rename_with_candidates(temp_filepath, [])
+
+
 def test_try_rename_with_candidates_fail_other_oserror(mocker: MockerFixture) -> None:
     """Test case where an OSError other than ENAMETOOLONG occurs."""
     temp_filepath = Path("/tmp/tempfile")
