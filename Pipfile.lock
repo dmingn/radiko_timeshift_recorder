@@ -810,12 +810,12 @@
         },
         "typer": {
             "hashes": [
-                "sha256:818873625d0569653438316567861899f7e9972f2e6e0c16dab608345ced713c",
-                "sha256:c86a65ad77ca531f03de08d1b9cb67cd09ad02ddddf4b34745b5008f43b239bd"
+                "sha256:89507b104f9b6a0730354f27c39fae5b63ccd0c95b1ce1f1a6ba0cfd329997c3",
+                "sha256:eb0651654dcdea706780c466cf06d8f174405a659ffff8f163cfbfee98c0e173"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.7'",
-            "version": "==0.15.3"
+            "version": "==0.15.4"
         },
         "typing-extensions": {
             "hashes": [
