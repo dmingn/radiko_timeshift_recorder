@@ -1,15 +1,19 @@
 import datetime
 import errno
 from pathlib import Path
+from unittest.mock import AsyncMock
 from zoneinfo import ZoneInfo
 
 import pytest
 from pytest_mock import MockerFixture
 
 from radiko_timeshift_recorder.download import (
+    DEFAULT_OUTPUT_FILE_MODE,
+    download,
     generate_filename_candidates,
     try_rename_with_candidates,
 )
+from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import Program
 
 
@@ -181,3 +185,36 @@ def test_try_rename_with_candidates_fail_other_oserror(mocker: MockerFixture) ->
         excinfo.value is permission_error
     )  # Verify that the same exception object is re-raised
     mock_replace.assert_called_once_with(out_filepath_candidates[0])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode", [0o600, DEFAULT_OUTPUT_FILE_MODE])
+async def test_download_applies_output_file_mode(
+    tmp_path: Path,
+    sample_job: Job,
+    mocker: MockerFixture,
+    mode: int,
+) -> None:
+    async def fake_download_stream(url: str, out_filepath: Path) -> None:
+        out_filepath.write_bytes(b"x")
+
+    mocker.patch(
+        "radiko_timeshift_recorder.download.download_stream",
+        side_effect=fake_download_stream,
+    )
+    mocker.patch(
+        "radiko_timeshift_recorder.download.get_duration",
+        new_callable=AsyncMock,
+        return_value=float(sample_job.program.dur),
+    )
+
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    await download(sample_job, out_dir, output_file_mode=mode)
+
+    mp4s = list(
+        (out_dir / sample_job.station_id / sample_job.program.title).glob("*.mp4")
+    )
+    assert len(mp4s) == 1
+    assert (mp4s[0].stat().st_mode & 0o7777) == mode
