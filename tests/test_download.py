@@ -1,5 +1,6 @@
 import datetime
 import errno
+import stat
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -7,9 +8,11 @@ import pytest
 from pytest_mock import MockerFixture
 
 from radiko_timeshift_recorder.download import (
+    download,
     generate_filename_candidates,
     try_rename_with_candidates,
 )
+from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import Program
 
 
@@ -93,6 +96,87 @@ def test_generate_filename_candidates(
     )
 
     assert generate_filename_candidates(program) == expected_candidates
+
+
+@pytest.mark.asyncio
+async def test_download_applies_file_and_dir_modes(
+    tmp_path: Path, mocker: MockerFixture, sample_job: Job
+) -> None:
+    out = tmp_path / "out"
+    out.mkdir()
+
+    async def fake_download_stream(url: str, fp: Path) -> None:
+        fp.write_bytes(b"x")
+
+    mocker.patch(
+        "radiko_timeshift_recorder.download.download_stream",
+        side_effect=fake_download_stream,
+    )
+    mocker.patch(
+        "radiko_timeshift_recorder.download.get_duration",
+        return_value=900.0,
+    )
+
+    ref_dir = tmp_path / "umask_ref"
+    ref_dir.mkdir(mode=0o750)
+    expected_dir_mode = stat.S_IMODE(ref_dir.stat().st_mode)
+
+    await download(
+        sample_job,
+        out,
+        output_file_mode=0o640,
+        output_dir_mode=0o750,
+        output_gid=None,
+    )
+
+    mp4s = list(out.rglob("*.mp4"))
+    assert len(mp4s) == 1
+    assert stat.S_IMODE(mp4s[0].stat().st_mode) == 0o640
+
+    program_dir = out / "TEST" / "test program"
+    assert program_dir.is_dir()
+    assert stat.S_IMODE(program_dir.stat().st_mode) == expected_dir_mode
+
+
+@pytest.mark.asyncio
+async def test_download_chowns_when_output_gid(
+    tmp_path: Path, mocker: MockerFixture, sample_job: Job
+) -> None:
+    out = tmp_path / "out"
+    out.mkdir()
+    gid = 12345
+
+    async def fake_download_stream(url: str, fp: Path) -> None:
+        fp.write_bytes(b"x")
+
+    mocker.patch(
+        "radiko_timeshift_recorder.download.download_stream",
+        side_effect=fake_download_stream,
+    )
+    mocker.patch(
+        "radiko_timeshift_recorder.download.get_duration",
+        return_value=900.0,
+    )
+    mock_chown = mocker.patch("radiko_timeshift_recorder.fs_unix.os.chown")
+
+    await download(
+        sample_job,
+        out,
+        output_file_mode=0o644,
+        output_dir_mode=0o755,
+        output_gid=gid,
+    )
+
+    mp4 = next(out.rglob("*.mp4"))
+    station_dir = out / "TEST"
+    program_dir = out / "TEST" / "test program"
+    chown_targets = {Path(c.args[0]).resolve() for c in mock_chown.call_args_list}
+    assert station_dir.resolve() in chown_targets
+    assert program_dir.resolve() in chown_targets
+    assert mp4.resolve() in chown_targets
+    for call in mock_chown.call_args_list:
+        assert call.args[1] == -1
+        assert call.args[2] == gid
 
 
 def test_try_rename_with_candidates_success_first_try(mocker: MockerFixture) -> None:

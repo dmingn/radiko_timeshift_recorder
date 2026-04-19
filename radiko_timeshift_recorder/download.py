@@ -1,6 +1,7 @@
 import asyncio
 import errno
 import logging
+import os
 import shlex
 import tempfile
 from pathlib import Path
@@ -9,9 +10,13 @@ from typing import Optional
 import tenacity
 from logzero import logger
 
+from radiko_timeshift_recorder.fs_unix import chown_group_under_ancestor
 from radiko_timeshift_recorder.get_duration import get_duration
 from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import Program
+
+DEFAULT_OUTPUT_FILE_MODE = 0o644
+DEFAULT_OUTPUT_DIR_MODE = 0o755
 
 
 def generate_filename_candidates(program: Program) -> tuple[str, ...]:
@@ -94,7 +99,14 @@ def try_rename_with_candidates(
     wait=tenacity.wait_fixed(wait=60),
     before_sleep=tenacity.before_sleep_log(logger=logger, log_level=logging.INFO),
 )
-async def download(job: Job, out_dir: Path) -> None:
+async def download(
+    job: Job,
+    out_dir: Path,
+    *,
+    output_file_mode: int = DEFAULT_OUTPUT_FILE_MODE,
+    output_dir_mode: int = DEFAULT_OUTPUT_DIR_MODE,
+    output_gid: Optional[int] = None,
+) -> None:
     program_dir = out_dir / job.station_id / job.program.title
     filename_candidates = generate_filename_candidates(job.program)
     suffix = ".mp4"
@@ -111,7 +123,7 @@ async def download(job: Job, out_dir: Path) -> None:
             )
             return
 
-    program_dir.mkdir(parents=True, exist_ok=True)
+    program_dir.mkdir(parents=True, exist_ok=True, mode=output_dir_mode)
 
     with tempfile.NamedTemporaryFile(
         mode="w+b",
@@ -133,5 +145,9 @@ async def download(job: Job, out_dir: Path) -> None:
         out_filepath = try_rename_with_candidates(
             temp_filepath, out_filepath_candidates
         )
+
+    os.chmod(out_filepath, output_file_mode)
+    if output_gid is not None:
+        chown_group_under_ancestor(out_dir, out_filepath, output_gid)
 
     logger.info(f"Downloaded {job} to {out_filepath}")
