@@ -1,7 +1,12 @@
 import asyncio
-from typing import Generic, TypeVar
+from typing import Any, Generic, Protocol, TypeVar
 
-T = TypeVar("T")
+
+class _SupportsLt(Protocol):
+    def __lt__(self, other: Any, /) -> bool: ...
+
+
+T = TypeVar("T", bound=_SupportsLt)
 
 
 class JobAlreadyExistsError(Exception):
