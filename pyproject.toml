@@ -1,7 +1,7 @@
 [project]
 name = "radiko-timeshift-recorder"
 version = "0.1.0"
-description = "Add your description here"
+description = "Radiko timeshift recorder"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
