@@ -97,6 +97,15 @@ def try_rename_with_candidates(
     wait=tenacity.wait_fixed(wait=60),
     before_sleep=tenacity.before_sleep_log(logger=logger, log_level=logging.INFO),
 )
+async def _download_and_validate_stream(job: Job, temp_filepath: Path) -> None:
+    await download_stream(job.url, temp_filepath)
+    recorded_dur = await get_duration(temp_filepath)
+    if abs(recorded_dur - job.program.dur) > 1:
+        raise AssertionError(
+            f"Recorded duration {recorded_dur} differs from the program duration {job.program.dur}."
+        )
+
+
 async def download(
     job: Job,
     out_dir: Path,
@@ -129,14 +138,7 @@ async def download(
     ) as tmp_file:
         temp_filepath = Path(tmp_file.name)
 
-        await download_stream(job.url, temp_filepath)
-
-        recorded_dur = await get_duration(temp_filepath)
-
-        if abs(recorded_dur - job.program.dur) > 1:
-            raise AssertionError(
-                f"Recorded duration {recorded_dur} differs from the program duration {job.program.dur}."
-            )
+        await _download_and_validate_stream(job, temp_filepath)
 
         out_filepath = try_rename_with_candidates(
             temp_filepath, out_filepath_candidates

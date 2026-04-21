@@ -218,3 +218,34 @@ async def test_download_applies_output_file_mode(
     )
     assert len(mp4s) == 1
     assert (mp4s[0].stat().st_mode & 0o7777) == mode
+
+
+@pytest.mark.asyncio
+async def test_download_retries_stream_after_transient_failure(
+    tmp_path: Path,
+    sample_job: Job,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch("asyncio.sleep", new_callable=AsyncMock)
+
+    download_stream_spy = mocker.patch(
+        "radiko_timeshift_recorder.download.download_stream",
+        new_callable=AsyncMock,
+        side_effect=[RuntimeError("transient stream failure"), None],
+    )
+    mocker.patch(
+        "radiko_timeshift_recorder.download.get_duration",
+        new_callable=AsyncMock,
+        return_value=float(sample_job.program.dur),
+    )
+
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    await download(sample_job, out_dir)
+
+    assert download_stream_spy.call_count == 2
+    mp4s = list(
+        (out_dir / sample_job.station_id / sample_job.program.title).glob("*.mp4")
+    )
+    assert len(mp4s) == 1
