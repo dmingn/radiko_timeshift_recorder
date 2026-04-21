@@ -101,7 +101,7 @@ async def _download_and_validate_stream(job: Job, temp_filepath: Path) -> None:
     await download_stream(job.url, temp_filepath)
     recorded_dur = await get_duration(temp_filepath)
     if abs(recorded_dur - job.program.dur) > 1:
-        raise AssertionError(
+        raise RuntimeError(
             f"Recorded duration {recorded_dur} differs from the program duration {job.program.dur}."
         )
 
