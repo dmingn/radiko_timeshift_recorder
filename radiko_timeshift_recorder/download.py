@@ -1,6 +1,7 @@
 import asyncio
 import errno
 import logging
+import os
 import shlex
 import tempfile
 from pathlib import Path
@@ -12,6 +13,8 @@ from logzero import logger
 from radiko_timeshift_recorder.get_duration import get_duration
 from radiko_timeshift_recorder.job import Job
 from radiko_timeshift_recorder.radiko import Program
+
+DEFAULT_OUTPUT_FILE_MODE = 0o644
 
 
 def generate_filename_candidates(program: Program) -> tuple[str, ...]:
@@ -94,7 +97,21 @@ def try_rename_with_candidates(
     wait=tenacity.wait_fixed(wait=60),
     before_sleep=tenacity.before_sleep_log(logger=logger, log_level=logging.INFO),
 )
-async def download(job: Job, out_dir: Path) -> None:
+async def _download_and_validate_stream(job: Job, temp_filepath: Path) -> None:
+    await download_stream(job.url, temp_filepath)
+    recorded_dur = await get_duration(temp_filepath)
+    if abs(recorded_dur - job.program.dur) > 1:
+        raise RuntimeError(
+            f"Recorded duration {recorded_dur} differs from the program duration {job.program.dur}."
+        )
+
+
+async def download(
+    job: Job,
+    out_dir: Path,
+    *,
+    output_file_mode: int = DEFAULT_OUTPUT_FILE_MODE,
+) -> None:
     program_dir = out_dir / job.station_id / job.program.title
     filename_candidates = generate_filename_candidates(job.program)
     suffix = ".mp4"
@@ -121,17 +138,11 @@ async def download(job: Job, out_dir: Path) -> None:
     ) as tmp_file:
         temp_filepath = Path(tmp_file.name)
 
-        await download_stream(job.url, temp_filepath)
-
-        recorded_dur = await get_duration(temp_filepath)
-
-        if abs(recorded_dur - job.program.dur) > 1:
-            raise AssertionError(
-                f"Recorded duration {recorded_dur} differs from the program duration {job.program.dur}."
-            )
+        await _download_and_validate_stream(job, temp_filepath)
 
         out_filepath = try_rename_with_candidates(
             temp_filepath, out_filepath_candidates
         )
 
+    os.chmod(out_filepath, output_file_mode)
     logger.info(f"Downloaded {job} to {out_filepath}")

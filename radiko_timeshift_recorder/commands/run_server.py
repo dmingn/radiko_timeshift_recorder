@@ -5,7 +5,8 @@ import typer
 import uvicorn
 from logzero import logger
 
-from radiko_timeshift_recorder.download import download
+from radiko_timeshift_recorder.download import DEFAULT_OUTPUT_FILE_MODE, download
+from radiko_timeshift_recorder.fs_unix import parse_unix_mode_string
 from radiko_timeshift_recorder.server import app as fastapi_app
 
 app = typer.Typer()
@@ -28,9 +29,23 @@ def run_server(
     num_workers: Annotated[
         int, typer.Option(min=1, help="Number of workers to run")
     ] = 3,
+    output_file_mode: Annotated[
+        str,
+        typer.Option(
+            help=(
+                "Octal permission bits for recorded .mp4 files after download "
+                f"(e.g. 644 or 0644). Default: {DEFAULT_OUTPUT_FILE_MODE:o}."
+            ),
+        ),
+    ] = "644",
 ):
     try:
-        fastapi_app.state.process_job = lambda job: download(job=job, out_dir=out_dir)
+        file_mode = parse_unix_mode_string(output_file_mode)
+        fastapi_app.state.process_job = lambda job: download(
+            job=job,
+            out_dir=out_dir,
+            output_file_mode=file_mode,
+        )
         fastapi_app.state.num_workers = num_workers
         uvicorn.run(app=fastapi_app, host=host, port=port)
     except Exception:
