@@ -1415,12 +1415,12 @@
         },
         "pytest-asyncio": {
             "hashes": [
-                "sha256:7b51ed894f4fbea1340262bdae5135797ebbe21d8638978e35d31c6d19f72fb0",
-                "sha256:c4df2a697648241ff39e7f0e4a73050b03f123f760673956cf0d72a4990e312f"
+                "sha256:611e26147c7f77640e6d0a92a38ed17c3e9848063698d5c93d5aa7aa11cebff5",
+                "sha256:d7f52f36d231b80ee124cd216ffb19369aa168fc10095013c6b014a34d3ee9e5"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.9'",
-            "version": "==0.26.0"
+            "markers": "python_version >= '3.10'",
+            "version": "==1.3.0"
         },
         "pytest-mock": {
             "hashes": [
