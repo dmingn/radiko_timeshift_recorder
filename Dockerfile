@@ -16,11 +16,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /export-requirements-txt
 
-RUN pip install pipenv
+RUN pip install uv
 
-COPY Pipfile Pipfile.lock ./
+COPY pyproject.toml uv.lock ./
 
-RUN pipenv requirements --hash > requirements.txt
+RUN uv export --frozen --no-dev -o requirements.txt
 
 
 FROM base AS install-requirements
