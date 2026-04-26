@@ -14,7 +14,7 @@ dependencies = [
     "streamlink>=8.3.0",
     "tenacity>=9.1.4",
     "typer>=0.24.1",
-    "uvicorn[standard]>=0.44.0",
+    "uvicorn[standard]>=0.46.0",
 ]
 
 [dependency-groups]
