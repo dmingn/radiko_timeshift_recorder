@@ -78,6 +78,5 @@ async def test_lifespan_starts_and_cancels_workers():
     for task in initial_tasks:
         assert task.cancelled()
 
-    await asyncio.gather(*initial_tasks, return_exceptions=True)
     for task in initial_tasks:
         assert task.done()
